@@ -1,6 +1,7 @@
 // Cropper
 
 const HANDLE_SIZE = 10;
+const PADDING = 10;
 const TARGET_WIDTH = 1280;
 const TARGET_HEIGHT = 720;
 const TARGET_RATIO = TARGET_WIDTH / TARGET_HEIGHT;
@@ -14,24 +15,12 @@ const Elements = Object.freeze({
     SW_HANDLE: 'swHandle',
 });
 
-function getInitialMask(image) {
-  if (image.width / image.height > TARGET_RATIO) {
-    let width = image.height * TARGET_RATIO;
-    let x = (image.width - width) / 2;
-    return new Mask(x, 0, width);
-  } else {
-    let y = (image.height - image.width / TARGET_RATIO) / 2;
-    return new Mask(0, y, image.width);
-  }
-}
-
 function Handle(x, y, element) {
   this.x = x;
   this.y = y;
   this.element = element;
 
-  this.buildPath = function(c) {
-    c.beginPath();
+  this.addPath = function(c) {
     c.rect(
         this.x - HANDLE_SIZE / 2,
         this.y - HANDLE_SIZE / 2,
@@ -50,8 +39,7 @@ function Mask(x, y, width) {
     return this.width / TARGET_RATIO;
   }
 
-  this.buildPath = function(c) {
-    c.beginPath();
+  this.addPath = function(c) {
     c.rect(this.x, this.y, this.width, this.height());
   }
 }
@@ -73,20 +61,47 @@ function Cropper(canvas) {
   this.imageScale = null;
   this.mask = null;
   this.handles = null;
+  this.draggingElement = Elements.NONE;
+
+  this.areaWidth = function() {
+    return this.canvas.width - 2 * PADDING;
+  }
+
+  this.areaHeight = function() {
+    return this.canvas.height - 2 * PADDING;
+  }
 
   this.setImage = function(image) {
     this.image = image;
-    this.imageScale = this.canvas.width / image.width;
-    this.canvas.height = this.imageScale * image.height;
-    this.setMask(new Mask(100, 100, 100));
+    this.imageScale = (this.canvas.width - 2 * PADDING) / image.width;
+    this.canvas.height = this.imageScale * image.height + 2 * PADDING;
+    this.c.setTransform(1, 0, 0, 1, PADDING, PADDING);
+    
+    this.setMask(this.getMaximumMask(image));
     this.draw();
   }
 
   this.drawImage = function() {
     this.c.save();
+    this.c.clearRect(
+        -1 * PADDING, -1 * PADDING, this.canvas.width, this.canvas.height);
     this.c.scale(this.imageScale, this.imageScale);
     this.c.drawImage(this.image, 0, 0);
     this.c.restore();
+  }
+
+  this.getMaximumMask = function() {
+    if (this.image == null) {
+      return null;
+    }
+    if (this.areaWidth() / this.areaHeight() > TARGET_RATIO) {
+      let width = this.areaHeight() * TARGET_RATIO;
+      let x = (this.areaWidth() - width) / 2;
+      return new Mask(x, 0, width);
+    } else {
+      let y = (this.areaHeight() - this.areaWidth() / TARGET_RATIO) / 2;
+      return new Mask(0, y, this.areaWidth());
+    }
   }
 
   this.setMask = function(mask) {
@@ -96,7 +111,8 @@ function Cropper(canvas) {
 
   this.drawMask = function() {
     this.c.fillStyle = 'rgba(64, 64, 64, 0.5)';
-    this.mask.buildPath(this.c);
+    this.c.beginPath();
+    this.mask.addPath(this.c);
     this.c.fill();
   }
 
@@ -112,10 +128,11 @@ function Cropper(canvas) {
 
   this.drawHandles = function() {
     this.c.fillStyle = 'rgb(64, 64, 64)';
+    this.c.beginPath();
     for (i in this.handles) {
-      this.handles[i].buildPath(this.c);
-      this.c.fill();
+      this.handles[i].addPath(this.c);
     }
+    this.c.fill();
   }
 
   this.draw = function() {
@@ -127,7 +144,8 @@ function Cropper(canvas) {
   this.pick = function(x, y) {
     elements = this.handles.concat(this.mask);
     for (i in elements) {
-      elements[i].buildPath(this.c);
+      this.c.beginPath();
+      elements[i].addPath(this.c);
       if (this.c.isPointInPath(x, y)) {
         return elements[i].element;
       }
@@ -135,14 +153,89 @@ function Cropper(canvas) {
     return Elements.NONE;
   }
 
+  this.pickFromEvent = function(e) {
+    let x = e.clientX - this.canvas.getBoundingClientRect().left;
+    let y = e.clientY - this.canvas.getBoundingClientRect().top;
+    return this.pick(x, y);
+  }
+
+  this.canvas.addEventListener('mousedown', e => {
+    if (this.mask == null) {
+      return;
+    }
+    this.draggingElement = this.pickFromEvent(e);
+  });
+
+  this.canvas.addEventListener('mouseup', e => {
+    this.draggingElement = Elements.NONE;
+  });
+
+  this.canvas.addEventListener('mouseleave', e => {
+    this.draggingElement = Elements.NONE;
+  });
+
+  this.updateMask = function(dx, dy, dw) {
+    if (this.mask == null) {
+      return;
+    }
+    let x = this.mask.x + dx;
+    let y = this.mask.y + dy;
+    let width = this.mask.width + dw;
+
+    if (x < 0) {
+      width = this.mask.width;
+      x = 0;
+    }
+    if (y < 0) {
+      width = this.mask.width;
+      y = 0;
+    }
+    if (x + width > this.areaWidth()) {
+      width = this.mask.width;
+      x = this.areaWidth() - width;
+    }
+    if (y + width / TARGET_RATIO > this.areaHeight()) {
+      width = this.mask.width;
+      y = this.areaHeight() - (width / TARGET_RATIO);
+    }
+
+    this.setMask(new Mask(x, y, width));
+    this.draw();
+  }
+
   this.canvas.addEventListener('mousemove', e => {
     if (this.mask == null) {
       return;
     }
-    let x = e.clientX - this.canvas.getBoundingClientRect().left;
-    let y = e.clientY - this.canvas.getBoundingClientRect().top;
-    let element = this.pick(x, y);
-    this.canvas.style.cursor = this.CURSOR_MAP.get(element);
+    switch (this.draggingElement) {
+      case Elements.NONE:
+        let element = this.pickFromEvent(e);
+        this.canvas.style.cursor = this.CURSOR_MAP.get(element);
+        break;
+      case Elements.MASK:
+        this.updateMask(e.movementX, e.movementY, 0);
+        break;
+      case Elements.NW_HANDLE:
+        {
+          const dw = -1 * e.movementX;
+          const dy = -1 * dw / TARGET_RATIO;
+          this.updateMask(e.movementX, dy, dw);
+        }
+        break;
+      case Elements.NE_HANDLE:
+        {
+          const dw = e.movementX;
+          const dy = -1 * dw / TARGET_RATIO;
+          this.updateMask(0, dy, dw);
+        }
+        break;
+      case Elements.SE_HANDLE:
+        this.updateMask(0, 0, e.movementX);
+        break;
+      case Elements.SW_HANDLE:
+        this.updateMask(e.movementX, 0, -1 * e.movementX);
+        break;
+    }
   });
 }
 
