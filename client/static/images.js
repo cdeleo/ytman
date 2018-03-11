@@ -44,7 +44,7 @@ function Mask(x, y, width) {
   }
 }
 
-function Cropper(canvas) {
+function Cropper(canvas, renderCanvas) {
   
   this.CURSOR_MAP = new Map([
       [Elements.NONE, 'default'],
@@ -56,6 +56,7 @@ function Cropper(canvas) {
   ]);
 
   this.canvas = canvas;
+  this.renderCanvas = renderCanvas;
   this.c = canvas.getContext('2d');
   this.image = null;
   this.imageScale = null;
@@ -76,9 +77,7 @@ function Cropper(canvas) {
     this.imageScale = (this.canvas.width - 2 * PADDING) / image.width;
     this.canvas.height = this.imageScale * image.height + 2 * PADDING;
     this.c.setTransform(1, 0, 0, 1, PADDING, PADDING);
-    
-    this.setMask(this.getMaximumMask(image));
-    this.draw();
+    this.resetMask();
   }
 
   this.drawImage = function() {
@@ -107,6 +106,14 @@ function Cropper(canvas) {
   this.setMask = function(mask) {
     this.mask = mask;
     this.handles = this.getHandles(mask);
+  }
+
+  this.resetMask = function() {
+    if (this.image == null) {
+      return;
+    }
+    this.setMask(this.getMaximumMask(this.image));
+    this.draw();
   }
 
   this.drawMask = function() {
@@ -139,6 +146,27 @@ function Cropper(canvas) {
     this.drawImage();
     this.drawMask();
     this.drawHandles();
+  }
+
+  this.render = function() {
+    const scaledMask = new Mask(
+        this.mask.x / this.imageScale,
+        this.mask.y / this.imageScale,
+        this.mask.width / this.imageScale);
+    if (scaledMask.width >= TARGET_WIDTH) {
+      this.renderCanvas.width = TARGET_WIDTH;
+      this.renderCanvas.height = TARGET_HEIGHT;
+    } else {
+      this.renderCanvas.width = scaledMask.width;
+      this.renderCanvas.height = scaledMask.height();
+    }
+    const renderC = this.renderCanvas.getContext('2d');
+    renderC.setTransform(1, 0, 0, 1, 0, 0);
+    renderC.translate(-1 * scaledMask.x, -1 * scaledMask.y);
+    const renderScale = this.renderCanvas.width / scaledMask.width;
+    renderC.scale(renderScale, renderScale);
+    renderC.drawImage(this.image, 0, 0);
+    console.log(this.renderCanvas.toDataURL());
   }
 
   this.pick = function(x, y) {
@@ -241,10 +269,14 @@ function Cropper(canvas) {
 
 // Main
 
-const container = document.querySelector('div');
-const canvas = document.querySelector('canvas');
+const container = document.querySelector('#cropper');
+const canvas = document.createElement('canvas');
 canvas.width = container.clientWidth;
-const cropper = new Cropper(canvas);
+container.appendChild(canvas);
+const renderCanvas = document.createElement('canvas');
+renderCanvas.style.display = 'none';
+container.appendChild(renderCanvas);
+const cropper = new Cropper(canvas, renderCanvas);
 
 const imageInput = document.querySelector('#imageInput');
 imageInput.addEventListener('change', function(e) {
@@ -260,4 +292,14 @@ imageInput.addEventListener('change', function(e) {
     image.src = e.target.result;
   }
   reader.readAsDataURL(e.target.files[0]);
+});
+
+const resetButton = document.querySelector('#resetButton');
+resetButton.addEventListener('click', function(e) {
+  cropper.resetMask();
+});
+
+const doneButton = document.querySelector('#doneButton');
+doneButton.addEventListener('click', function(e) {
+  cropper.render();
 });
