@@ -1,0 +1,233 @@
+{
+  "basePath": "/_ah/api",
+  "consumes": [
+    "application/json"
+  ],
+  "definitions": {
+    "ImagesCreateRequest": {
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/ImagesImage"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesCreateResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesDeleteResponse": {
+      "properties": {},
+      "type": "object"
+    },
+    "ImagesImage": {
+      "properties": {},
+      "type": "object"
+    },
+    "ImagesListResponse": {
+      "properties": {
+        "images": {
+          "items": {
+            "$ref": "#/definitions/ImagesImage"
+          },
+          "type": "array"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesSearchResponse": {
+      "properties": {
+        "images": {
+          "items": {
+            "$ref": "#/definitions/ImagesImage"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesUpdateRequest": {
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/ImagesImage"
+        },
+        "mask": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesUpdateResponse": {
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/ImagesImage"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "host": "datastore-dot-youtube-manager-196811.appspot.com",
+  "info": {
+    "title": "images",
+    "version": "v1"
+  },
+  "paths": {
+    "/images/v1/create": {
+      "post": {
+        "operationId": "ImagesApi_createHandler",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/ImagesCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ImagesCreateResponse"
+            }
+          }
+        }
+      }
+    },
+    "/images/v1/list": {
+      "get": {
+        "operationId": "ImagesApi_listHandler",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ImagesListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/images/v1/list/{token}": {
+      "get": {
+        "operationId": "ImagesApi_listContinueHandler",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ImagesListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/images/v1/search/{q}": {
+      "get": {
+        "operationId": "ImagesApi_searchHandler",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "q",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ImagesSearchResponse"
+            }
+          }
+        }
+      }
+    },
+    "/images/v1/{id}": {
+      "delete": {
+        "operationId": "ImagesApi_deleteHandler",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ImagesDeleteResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "ImagesApi_updateHandler",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/ImagesUpdateRequest"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ImagesUpdateResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "https"
+  ],
+  "securityDefinitions": {
+    "google_id_token": {
+      "authorizationUrl": "",
+      "flow": "implicit",
+      "type": "oauth2",
+      "x-google-issuer": "https://accounts.google.com",
+      "x-google-jwks_uri": "https://www.googleapis.com/oauth2/v3/certs"
+    }
+  },
+  "swagger": "2.0"
+}
