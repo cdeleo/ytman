@@ -31,6 +31,7 @@ class ImagesTest(unittest.TestCase):
     self.testbed.activate()
     self.testbed.init_datastore_v3_stub()
     self.testbed.init_memcache_stub()
+    self.testbed.init_search_stub()
     ndb.get_context().clear_cache()
 
     self.writer = _FakeImageWriter()
@@ -65,6 +66,10 @@ class ImagesTest(unittest.TestCase):
     self.assert_image(keys[2], results[0], self.get_test_image(2))
     self.assertIsNone(token)
 
+  def test_get_prefixes(self):
+    prefixes = images._get_prefixes('tee test')
+    self.assertEqual(set(prefixes), {'t', 'te', 'tee', 'tes', 'test'})
+
   def run_test_search(self, query):
     keys = []
     for i in xrange(3):
@@ -83,10 +88,9 @@ class ImagesTest(unittest.TestCase):
     self.assert_image(keys[1], results[0], self.get_test_image(1))
 
   def test_search_multiple_results(self):
+    self.client._page_size = 3
     keys, results = self.run_test_search('ima')
     self.assertEqual(len(results), 3)
-    for i, (key, result) in enumerate(zip(keys, results)):
-      self.assert_image(key, result, self.get_test_image(i))
 
   def test_create(self):
     image = self.get_test_image(0)

@@ -2,12 +2,41 @@ import cloudstorage as gcs
 
 from google.appengine.api import app_identity
 from google.appengine.api import images
+from google.appengine.api import search
 from google.appengine.ext import ndb
+
+def _get_prefixes(value):
+  prefixes = set()
+  for token in value.split():
+    for i in xrange(1, len(token) + 1):
+      prefixes.add(token[:i])
+  return prefixes
 
 class Image(ndb.Model):
   name = ndb.StringProperty()
   url = ndb.StringProperty(indexed=False)
   metadata = ndb.JsonProperty()
+
+  INDEX_NAME = 'images'
+  INDEX_FIELD_NAME_PREFIXES = 'name_prefixes'
+
+  def _post_put_hook(self, future):
+    if future.get_exception() is not None:
+      return
+    search.Index(Image.INDEX_NAME).put(
+        search.Document(
+            doc_id=self.key.urlsafe(),
+            fields=[
+                search.TextField(
+                    name=Image.INDEX_FIELD_NAME_PREFIXES,
+                    value=','.join(_get_prefixes(self.name)))]))
+
+  @classmethod
+  def _post_delete_hook(self, key, future):
+    if future.get_exception() is not None:
+      return
+    search.Index(Image.INDEX_NAME).delete(key.urlsafe())
+    
 
 class _GcsImageWriter(object):
 
@@ -37,7 +66,12 @@ class ImageClient(object):
     return results, cursor.to_websafe_string() if cursor and more else None
 
   def search(self, query):
-    return []
+    query_string = '%s: %s' % (Image.INDEX_FIELD_NAME_PREFIXES, query)
+    query_obj = search.Query(
+        query_string=query_string,
+        options=search.QueryOptions(limit=self._page_size, ids_only=True))
+    docs = search.Index(Image.INDEX_NAME).search(query_obj)
+    return ndb.get_multi([ndb.Key(urlsafe=doc.doc_id) for doc in docs])
 
   def create(self, name, data, metadata):
     key = ndb.Key(Image, Image.allocate_ids(1)[0])
