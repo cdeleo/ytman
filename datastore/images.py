@@ -1,119 +1,63 @@
-import endpoints
-from protorpc import message_types
-from protorpc import messages
-from protorpc import remote
+import cloudstorage as gcs
 
-# Common messages
+from google.appengine.api import app_identity
+from google.appengine.api import images
+from google.appengine.ext import ndb
 
-class Image(messages.Message):
-  id = messages.StringField(1)
-  name = messages.StringField(2)
-  data = messages.StringField(3)
+class Image(ndb.Model):
+  name = ndb.StringProperty()
+  url = ndb.StringProperty(indexed=False)
+  metadata = ndb.JsonProperty()
 
-# List
+class _GcsImageWriter(object):
 
-LIST_RESOURCE = endpoints.ResourceContainer(
-    message_types.VoidMessage,
-    token=messages.StringField(1))
+  def write(self, key, data):
+    filename = '/%s/%s' % (app_identity.get_default_gcs_bucket_name(), key)
+    gcs_file = gcs.open(
+        filename,
+        'w',
+        content_type='image/png',
+        retry_params=gcs.RetryParams(backoff_factor=1.1))
+    gcs_file.write(data)
+    gcs_file.close()
+    return images.get_serving_url(filename=filename)
 
-class ListResponse(messages.Message):
-  images = messages.MessageField(Image, 1, repeated=True)
-  token = messages.StringField(2)
+class ImageClient(object):
 
-# Search
+  def __init__(self, writer=None, page_size=10):
+    self._writer = writer if writer else _GcsImageWriter()
+    self._page_size = page_size
 
-SEARCH_RESOURCE = endpoints.ResourceContainer(
-    message_types.VoidMessage,
-    q=messages.StringField(1))
+  def list(self, token=None):
+    fetch_args = {'page_size': self._page_size}
+    if token:
+      fetch_args['start_cursor'] = ndb.Cursor.from_websafe_string(token)
+    results, cursor, more = (
+        Image.query().order(Image.name).fetch_page(**fetch_args))
+    return results, cursor.to_websafe_string() if cursor and more else None
 
-class SearchResponse(messages.Message):
-  images = messages.MessageField(Image, 1, repeated=True)
+  def search(self, query):
+    return []
 
-# Create
+  def create(self, name, data, metadata):
+    key = ndb.Key(Image, Image.allocate_ids(1)[0])
+    image = Image(key=key, name=name, metadata=metadata)
+    image.url = self._writer.write(key.urlsafe(), data)
+    image.put()
+    return key.urlsafe()
 
-class CreateRequest(messages.Message):
-  image = messages.MessageField(Image, 1)
+  def update(self, key, delta, mask):
+    image = ndb.Key(urlsafe=key).get()
+    if 'name' in mask:
+      image.name = delta.name
+    if 'metadata' in mask:
+      for k, v in delta.metadata.iteritems():
+        if v is None:
+          image.metadata.pop(k, None)
+        else:
+          image.metadata[k] = v
+    image.put()
+    return image
 
-class CreateResponse(messages.Message):
-  id = messages.StringField(1)
-
-# Update
-
-class UpdateRequest(messages.Message):
-  image = messages.MessageField(Image, 1)
-  mask = messages.StringField(2, repeated=True)
-
-UPDATE_RESOURCE = endpoints.ResourceContainer(
-    UpdateRequest,
-    id=messages.StringField(3))
-
-class UpdateResponse(messages.Message):
-  image = messages.MessageField(Image, 1)
-
-# Delete
-
-DELETE_RESOURCE = endpoints.ResourceContainer(
-    message_types.VoidMessage,
-    id=messages.StringField(1))
-
-class DeleteResponse(messages.Message):
-  pass
-
-# Service
-
-@endpoints.api(name='images', version='v1')
-class ImagesApi(remote.Service):
-
-  @endpoints.method(
-      LIST_RESOURCE,
-      ListResponse,
-      path='list',
-      http_method='GET',
-      name='list')
-  def list_handler(self, request):
-    return ListResponse()
-
-  @endpoints.method(
-      LIST_RESOURCE,
-      ListResponse,
-      path='list/{token}',
-      http_method='GET',
-      name='list_continue')
-  def list_continue_handler(self, request):
-    return ListResponse()
-
-  @endpoints.method(
-      SEARCH_RESOURCE,
-      SearchResponse,
-      path='search/{q}',
-      http_method='GET',
-      name='search')
-  def search_handler(self, request):
-    return SearchResponse()
-
-  @endpoints.method(
-      CreateRequest,
-      CreateResponse,
-      path='create',
-      http_method='POST',
-      name='create')
-  def create_handler(self, request):
-    return CreateResponse(id='fake_id')
-
-  @endpoints.method(
-      UPDATE_RESOURCE,
-      UpdateResponse,
-      path='{id}',
-      http_method='PUT',
-      name='update')
-  def update_handler(self, request):
-    return UpdateResponse()
-
-  @endpoints.method(
-      DELETE_RESOURCE,
-      DeleteResponse,
-      path='{id}',
-      http_method='DELETE',
-      name='delete')
-  def delete_handler(self, request):
-    return DeleteResponse()
+  def delete(self, key):
+    ndb.Key(urlsafe=key).delete()
