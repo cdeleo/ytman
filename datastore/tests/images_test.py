@@ -35,14 +35,14 @@ class ImagesTest(unittest.TestCase):
     ndb.get_context().clear_cache()
 
     self.writer = _FakeImageWriter()
-    self.client = images.ImageClient(writer=self.writer, page_size=2)
+    self.client = images.ImagesClient(writer=self.writer, page_size=2)
 
   def tearDown(self):
     self.testbed.deactivate()
 
   def test_list(self):
     image = self.get_test_image(0)
-    key = self.client.create(image.name, image.data, image.metadata)
+    key = self.client.create(image.name, image.data, image.metadata).key
 
     results, token = self.client.list()
     self.assertEqual(len(results), 1)
@@ -53,7 +53,8 @@ class ImagesTest(unittest.TestCase):
     keys = []
     for i in xrange(3):
       image = self.get_test_image(i)
-      keys.append(self.client.create(image.name, image.data, image.metadata))
+      keys.append(
+          self.client.create(image.name, image.data, image.metadata).key)
 
     results, token = self.client.list()
     self.assertEqual(len(results), 2)
@@ -74,7 +75,8 @@ class ImagesTest(unittest.TestCase):
     keys = []
     for i in xrange(3):
       image = self.get_test_image(i)
-      keys.append(self.client.create(image.name, image.data, image.metadata))
+      keys.append(
+          self.client.create(image.name, image.data, image.metadata).key)
 
     return keys, self.client.search(query)
 
@@ -94,18 +96,18 @@ class ImagesTest(unittest.TestCase):
 
   def test_create(self):
     image = self.get_test_image(0)
-    key = self.client.create(image.name, image.data, image.metadata)
+    key = self.client.create(image.name, image.data, image.metadata).key
 
-    result = ndb.Key(urlsafe=key).get()
+    result = key.get()
     self.assert_image(key, result, image)
-    self.assertEqual(self.writer.images[key], image.data)
+    self.assertEqual(self.writer.images[key.urlsafe()], image.data)
 
   def run_test_update(self, mask):
     # Initial value
     image = self.get_test_image(0)
     image.metadata['arg_to_update'] = 'value_to_update'
     image.metadata['arg_to_delete'] = 'value_to_delete'
-    key = self.client.create(image.name, image.data, image.metadata)
+    key = self.client.create(image.name, image.data, image.metadata).key
 
     # Delta
     delta = self.get_test_image(0)
@@ -134,7 +136,7 @@ class ImagesTest(unittest.TestCase):
 
   def test_delete(self):
     image = self.get_test_image(0)
-    key = self.client.create(image.name, image.data, image.metadata)
+    key = self.client.create(image.name, image.data, image.metadata).key
     self.client.delete(key)
 
     results, token = self.client.list()
@@ -148,7 +150,7 @@ class ImagesTest(unittest.TestCase):
 
   def assert_image(self, key, actual, expected):
     self.assertEqual(actual.name, expected.name)
-    self.assertEqual(actual.url, _FakeImageWriter.PREFIX + key)
+    self.assertEqual(actual.url, _FakeImageWriter.PREFIX + key.urlsafe())
     self.assertEqual(actual.metadata, expected.metadata)
 
 if __name__ == '__main__':

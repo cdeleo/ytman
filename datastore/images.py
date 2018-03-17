@@ -36,7 +36,6 @@ class Image(ndb.Model):
     if future.get_exception() is not None:
       return
     search.Index(Image.INDEX_NAME).delete(key.urlsafe())
-    
 
 class _GcsImageWriter(object):
 
@@ -51,7 +50,7 @@ class _GcsImageWriter(object):
     gcs_file.close()
     return images.get_serving_url(filename=filename)
 
-class ImageClient(object):
+class ImagesClient(object):
 
   def __init__(self, writer=None, page_size=10):
     self._writer = writer if writer else _GcsImageWriter()
@@ -71,17 +70,17 @@ class ImageClient(object):
         query_string=query_string,
         options=search.QueryOptions(limit=self._page_size, ids_only=True))
     docs = search.Index(Image.INDEX_NAME).search(query_obj)
-    return ndb.get_multi([ndb.Key(urlsafe=doc.doc_id) for doc in docs])
+    return ndb.get_multi([self.parse_key(doc.doc_id) for doc in docs])
 
   def create(self, name, data, metadata):
     key = ndb.Key(Image, Image.allocate_ids(1)[0])
     image = Image(key=key, name=name, metadata=metadata)
     image.url = self._writer.write(key.urlsafe(), data)
     image.put()
-    return key.urlsafe()
+    return image
 
   def update(self, key, delta, mask):
-    image = ndb.Key(urlsafe=key).get()
+    image = key.get()
     if 'name' in mask:
       image.name = delta.name
     if 'metadata' in mask:
@@ -94,4 +93,8 @@ class ImageClient(object):
     return image
 
   def delete(self, key):
-    ndb.Key(urlsafe=key).delete()
+    key.delete()
+
+  @staticmethod
+  def parse_key(key):
+    return ndb.Key(urlsafe=key)
