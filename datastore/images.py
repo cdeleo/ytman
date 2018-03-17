@@ -40,7 +40,8 @@ class Image(ndb.Model):
 class _GcsImageWriter(object):
 
   def write(self, key, data):
-    filename = '/%s/%s' % (app_identity.get_default_gcs_bucket_name(), key)
+    filename = '/%s/images/%s.png' % (
+        app_identity.get_default_gcs_bucket_name(), key)
     gcs_file = gcs.open(
         filename,
         'w',
@@ -48,7 +49,7 @@ class _GcsImageWriter(object):
         retry_params=gcs.RetryParams(backoff_factor=1.1))
     gcs_file.write(data)
     gcs_file.close()
-    return images.get_serving_url(filename=filename)
+    return images.get_serving_url(None, filename=('/gs' + filename))
 
 class ImagesClient(object):
 

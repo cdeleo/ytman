@@ -1,4 +1,4 @@
 import endpoints
-import images
+import images_api
 
-api = endpoints.api_server([images.ImagesApi])
+api = endpoints.api_server([images_api.ImagesApi])

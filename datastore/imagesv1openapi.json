@@ -4,35 +4,60 @@
     "application/json"
   ],
   "definitions": {
-    "ImagesCreateRequest": {
+    "ImagesApiCreateRequest": {
       "properties": {
-        "image": {
-          "$ref": "#/definitions/ImagesImage"
-        }
-      },
-      "type": "object"
-    },
-    "ImagesCreateResponse": {
-      "properties": {
-        "id": {
+        "data": {
+          "type": "string"
+        },
+        "metadata": {
+          "items": {
+            "$ref": "#/definitions/ImagesApiMetadataPair"
+          },
+          "type": "array"
+        },
+        "name": {
           "type": "string"
         }
       },
       "type": "object"
     },
-    "ImagesDeleteResponse": {
+    "ImagesApiCreateResponse": {
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/ImagesApiImage"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesApiDeleteResponse": {
       "properties": {},
       "type": "object"
     },
-    "ImagesImage": {
-      "properties": {},
+    "ImagesApiImage": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "metadata": {
+          "items": {
+            "$ref": "#/definitions/ImagesApiMetadataPair"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
-    "ImagesListResponse": {
+    "ImagesApiListResponse": {
       "properties": {
         "images": {
           "items": {
-            "$ref": "#/definitions/ImagesImage"
+            "$ref": "#/definitions/ImagesApiImage"
           },
           "type": "array"
         },
@@ -42,21 +67,32 @@
       },
       "type": "object"
     },
-    "ImagesSearchResponse": {
+    "ImagesApiMetadataPair": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ImagesApiSearchResponse": {
       "properties": {
         "images": {
           "items": {
-            "$ref": "#/definitions/ImagesImage"
+            "$ref": "#/definitions/ImagesApiImage"
           },
           "type": "array"
         }
       },
       "type": "object"
     },
-    "ImagesUpdateRequest": {
+    "ImagesApiUpdateRequest": {
       "properties": {
-        "image": {
-          "$ref": "#/definitions/ImagesImage"
+        "delta": {
+          "$ref": "#/definitions/ImagesApiImage"
         },
         "mask": {
           "items": {
@@ -67,10 +103,10 @@
       },
       "type": "object"
     },
-    "ImagesUpdateResponse": {
+    "ImagesApiUpdateResponse": {
       "properties": {
         "image": {
-          "$ref": "#/definitions/ImagesImage"
+          "$ref": "#/definitions/ImagesApiImage"
         }
       },
       "type": "object"
@@ -90,7 +126,7 @@
             "in": "body",
             "name": "body",
             "schema": {
-              "$ref": "#/definitions/ImagesCreateRequest"
+              "$ref": "#/definitions/ImagesApiCreateRequest"
             }
           }
         ],
@@ -98,7 +134,7 @@
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/ImagesCreateResponse"
+              "$ref": "#/definitions/ImagesApiCreateResponse"
             }
           }
         }
@@ -118,7 +154,7 @@
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/ImagesListResponse"
+              "$ref": "#/definitions/ImagesApiListResponse"
             }
           }
         }
@@ -139,7 +175,7 @@
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/ImagesListResponse"
+              "$ref": "#/definitions/ImagesApiListResponse"
             }
           }
         }
@@ -160,19 +196,19 @@
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/ImagesSearchResponse"
+              "$ref": "#/definitions/ImagesApiSearchResponse"
             }
           }
         }
       }
     },
-    "/images/v1/{id}": {
+    "/images/v1/{key}": {
       "delete": {
         "operationId": "ImagesApi_deleteHandler",
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "key",
             "required": true,
             "type": "string"
           }
@@ -181,7 +217,7 @@
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/ImagesDeleteResponse"
+              "$ref": "#/definitions/ImagesApiDeleteResponse"
             }
           }
         }
@@ -193,12 +229,12 @@
             "in": "body",
             "name": "body",
             "schema": {
-              "$ref": "#/definitions/ImagesUpdateRequest"
+              "$ref": "#/definitions/ImagesApiUpdateRequest"
             }
           },
           {
             "in": "path",
-            "name": "id",
+            "name": "key",
             "required": true,
             "type": "string"
           }
@@ -207,7 +243,7 @@
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/ImagesUpdateResponse"
+              "$ref": "#/definitions/ImagesApiUpdateResponse"
             }
           }
         }

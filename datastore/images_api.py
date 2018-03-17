@@ -1,3 +1,4 @@
+import base64
 import endpoints
 import json
 
@@ -140,6 +141,14 @@ class ImagesApi(remote.Service):
     resp.images = [self.image_model_to_proto(r) for r in images]
     return resp
 
+  DATA_PREFIX = 'data:image/png;base64,'
+
+  @classmethod
+  def _decode_data(cls, data):
+    if not data.startswith(cls.DATA_PREFIX):
+      raise ValueError('Incorrect image format')
+    return base64.urlsafe_b64decode(str(data[len(cls.DATA_PREFIX):]))
+
   @endpoints.method(
       CreateRequest,
       CreateResponse,
@@ -148,7 +157,9 @@ class ImagesApi(remote.Service):
       name='create')
   def create_handler(self, req):
     image = self.client.create(
-        req.name, req.data, self.metadata_proto_to_model(req.metadata))
+        req.name,
+        self._decode_data(req.data),
+        self.metadata_proto_to_model(req.metadata))
     resp = CreateResponse()
     resp.image = self.image_model_to_proto(image)
     return resp

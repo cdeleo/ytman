@@ -23,7 +23,8 @@ class ImagesApiTest(unittest.TestCase):
       'name': TEST_IMAGE.name,
       'url': TEST_IMAGE.url,
       'metadata': [{'key': 'test_arg', 'value': 'test_value'}]}
-  IMAGE_DATA = 'image_data'
+  IMAGE_DATA = 'data:image/png;base64,b2N0b3B1cw=='  # 'octopus' in urlsafe b64
+  IMAGE_DATA_DECODED = 'octopus'
 
   def setUp(self):
     self.testbed = testbed.Testbed()
@@ -77,7 +78,7 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'image': self.TEST_IMAGE_JSON})
     self.client.create.assert_called_with(
-        self.TEST_IMAGE.name, self.IMAGE_DATA, self.TEST_IMAGE.metadata)
+        self.TEST_IMAGE.name, self.IMAGE_DATA_DECODED, self.TEST_IMAGE.metadata)
 
   def test_update(self):
     self.client.update.return_value = self.TEST_IMAGE

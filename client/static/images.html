@@ -1,9 +1,23 @@
 <html>
   <body>
-    <input type="file" id="imageInput" accept="image/*" />
-    <div style="width: 80%" id="cropper"></div>
-    <input type="button" value="Reset" id="resetButton" />
-    <input type="button" value="Done" id="doneButton" />
+    <div>
+      <input type="file" id="imageInput" accept="image/*" />
+      <input type="button" value="Reset" id="resetButton" />
+      <div style="width: 80%" id="cropper"></div>
+      <table>
+        <tr>
+          <td><label for="nameField">Name:</label></td>
+          <td><input type="text" id="nameField" /></td>
+        </tr>
+        <tr>
+          <td><label for="midField">MID:</label></td>
+          <td><input type="text" id="midField" placeholder="optional" /></td>
+        </tr>
+      </table>
+      <input type="button" value="Done" id="doneButton" />
+    </div>
   </body>
+  <script src="/static/cropper.js"></script>
   <script src="/static/images.js"></script>
+  <script src="https://apis.google.com/js/client.js?onload=initApi"></script>
 </html>
