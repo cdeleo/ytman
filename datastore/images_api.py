@@ -8,6 +8,9 @@ from protorpc import remote
 
 import images
 
+WEB_CLIENT_ID = '955262123852-c1gthms5mhs36q6njvg6kgqu4f1b09q7.apps.googleusercontent.com'
+CLIENT_IDS = [WEB_CLIENT_ID]
+
 # Common messages
 
 class MetadataPair(messages.Message):
@@ -73,7 +76,7 @@ class DeleteResponse(messages.Message):
 
 # Service
 
-@endpoints.api(name='images', version='v1')
+@endpoints.api(name='images', version='v1', allowed_client_ids=CLIENT_IDS)
 class ImagesApi(remote.Service):
 
   def __init__(self):
@@ -103,8 +106,16 @@ class ImagesApi(remote.Service):
   def metadata_proto_to_model(cls, proto_metadata):
     return {p.key: p.value for p in proto_metadata}
 
+  @classmethod
+  def get_current_user_id(cls):
+    user = endpoints.get_current_user()
+    if not user:
+      raise endpoints.UnauthorizedException
+    return user.user_id()
+
   def common_list_handler(self, token=None):
-    images, next_token = self.client.list(token=token if token else None)
+    images, next_token = self.client.list(
+        self.get_current_user_id(), token=token if token else None)
     resp = ListResponse()
     resp.images = [self.image_model_to_proto(r) for r in images]
     if next_token:
@@ -136,7 +147,7 @@ class ImagesApi(remote.Service):
       http_method='GET',
       name='search')
   def search_handler(self, req):
-    images = self.client.search(req.q)
+    images = self.client.search(self.get_current_user_id(), req.q)
     resp = SearchResponse()
     resp.images = [self.image_model_to_proto(r) for r in images]
     return resp
@@ -157,6 +168,7 @@ class ImagesApi(remote.Service):
       name='create')
   def create_handler(self, req):
     image = self.client.create(
+        self.get_current_user_id(),
         req.name,
         self._decode_data(req.data),
         self.metadata_proto_to_model(req.metadata))
@@ -172,6 +184,7 @@ class ImagesApi(remote.Service):
       name='update')
   def update_handler(self, req):
     image = self.client.update(
+        self.get_current_user_id(),
         self.client.parse_key(req.key),
         self.delta_proto_to_model(req.delta),
         req.mask)
@@ -186,5 +199,6 @@ class ImagesApi(remote.Service):
       http_method='DELETE',
       name='delete')
   def delete_handler(self, req):
-    self.client.delete(self.client.parse_key(req.key))
+    self.client.delete(
+        self.get_current_user_id(), self.client.parse_key(req.key))
     return DeleteResponse()

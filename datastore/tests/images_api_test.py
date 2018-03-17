@@ -25,6 +25,7 @@ class ImagesApiTest(unittest.TestCase):
       'metadata': [{'key': 'test_arg', 'value': 'test_value'}]}
   IMAGE_DATA = 'data:image/png;base64,b2N0b3B1cw=='  # 'octopus' in urlsafe b64
   IMAGE_DATA_DECODED = 'octopus'
+  USER_ID = 'test@example.com'
 
   def setUp(self):
     self.testbed = testbed.Testbed()
@@ -39,6 +40,10 @@ class ImagesApiTest(unittest.TestCase):
         super(_TestImagesApi, inner_self).__init__()
         inner_self.client = self.client
 
+      @classmethod
+      def get_current_user_id(cls):
+        return self.USER_ID
+
     self.app = webtest.TestApp(endpoints.api_server([_TestImagesApi]))
 
   def tearDown(self):
@@ -51,7 +56,7 @@ class ImagesApiTest(unittest.TestCase):
     resp = self.app.get(self.API_PREFIX + '/list')
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'images': [self.TEST_IMAGE_JSON]})
-    self.client.list.assert_called_with(token=None)
+    self.client.list.assert_called_with(self.USER_ID, token=None)
 
   def test_list_continue(self):
     self.client.list.return_value = [self.TEST_IMAGE], 'test_token_1'
@@ -59,14 +64,14 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(
         resp.json, {'images': [self.TEST_IMAGE_JSON], 'token': 'test_token_1'})
-    self.client.list.assert_called_with(token='test_token_0')
+    self.client.list.assert_called_with(self.USER_ID, token='test_token_0')
 
   def test_search(self):
     self.client.search.return_value = [self.TEST_IMAGE]
     resp = self.app.get(self.API_PREFIX + '/search/ima')
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'images': [self.TEST_IMAGE_JSON]})
-    self.client.search.assert_called_with('ima')
+    self.client.search.assert_called_with(self.USER_ID, 'ima')
 
   def test_create(self):
     self.client.create.return_value = self.TEST_IMAGE
@@ -78,7 +83,10 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'image': self.TEST_IMAGE_JSON})
     self.client.create.assert_called_with(
-        self.TEST_IMAGE.name, self.IMAGE_DATA_DECODED, self.TEST_IMAGE.metadata)
+        self.USER_ID,
+        self.TEST_IMAGE.name,
+        self.IMAGE_DATA_DECODED,
+        self.TEST_IMAGE.metadata)
 
   def test_update(self):
     self.client.update.return_value = self.TEST_IMAGE
@@ -88,6 +96,7 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'image': self.TEST_IMAGE_JSON})
     self.client.update.assert_called_with(
+        self.USER_ID,
         self.TEST_IMAGE.key,
         images.Image(
             name = self.TEST_IMAGE.name,
@@ -97,7 +106,7 @@ class ImagesApiTest(unittest.TestCase):
   def test_delete(self):
     resp = self.app.delete(self.API_PREFIX + '/' + self.TEST_IMAGE_JSON['key'])
     self.assertEqual(self.get_status_code(resp), 200)
-    self.client.delete.assert_called_with(self.TEST_IMAGE.key)
+    self.client.delete.assert_called_with(self.USER_ID, self.TEST_IMAGE.key)
 
   # Utility functions
 
