@@ -1,9 +1,20 @@
 <html>
+  <style>
+    .pane {
+      display: none;
+    }
+  </style>
   <body>
-    <div>
+    <div id="signinPane" class="pane signedout">
+      <a href="javascript:void(0);" id="signinButton">Sign in</a>
+    </div>
+    <div id="signoutPane" class="pane signedin">
+      <a href="javascript:void(0);" id="signoutButton">Sign out</a>
+    </div>
+    <div id="uploadPane" class="pane signedin">
       <input type="file" id="imageInput" accept="image/*" />
       <input type="button" value="Reset" id="resetButton" />
-      <div style="width: 80%" id="cropper"></div>
+      <div style="width: 80%" id="cropperPane"></div>
       <table>
         <tr>
           <td><label for="nameField">Name:</label></td>
@@ -19,5 +30,8 @@
   </body>
   <script src="/static/cropper.js"></script>
   <script src="/static/images.js"></script>
-  <script src="https://apis.google.com/js/client.js?onload=initApi"></script>
+  <script async defer src="https://apis.google.com/js/api.js" 
+    onload="this.onload=function(){};handleClientLoad()" 
+    onreadystatechange="if (this.readyState === 'complete') this.onload()">
+  </script>
 </html>

@@ -54,8 +54,10 @@ class Image(ndb.Model):
 class _GcsImageWriter(object):
 
   def write(self, key, data):
-    filename = '/%s/images/%s.png' % (
-        app_identity.get_default_gcs_bucket_name(), key)
+    filename = '/%s/images/%s/%s.png' % (
+        app_identity.get_default_gcs_bucket_name(),
+        Image.get_user_id_from_key(ndb.Key(urlsafe=key)),
+        key)
     gcs_file = gcs.open(
         filename,
         'w',

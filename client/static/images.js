@@ -1,12 +1,32 @@
-let cropper = null;
+let auth = null;
 
-function initApi() {
-  gapi.client.load(
-      'images', 'v1', null,
-      'https://datastore-dot-youtube-manager-196811.appspot.com/_ah/api');
+function handleClientLoad() {
+  gapi.load('client:auth2', initClient);
 }
 
-function validateCreate() {
+function initClient() {
+  const params = {
+    discoveryDocs: ['https://datastore-dot-youtube-manager-196811.appspot.com/_ah/api/discovery/v1/apis/images/v1/rest'],
+    client_id: '955262123852-c1gthms5mhs36q6njvg6kgqu4f1b09q7.apps.googleusercontent.com',
+    scope: 'https://www.googleapis.com/auth/userinfo.email'
+  };
+  gapi.client.init(params).then(function() {
+    auth = gapi.auth2.getAuthInstance();
+    auth.isSignedIn.listen(handleSigninState);
+    handleSigninState(auth.isSignedIn.get());
+  });
+}
+
+function handleSigninState(isSignedIn) {
+  document.querySelectorAll('.signedin').forEach(function(item) {
+    item.style.display = isSignedIn ? 'block' : 'none';
+  });
+  document.querySelectorAll('.signedout').forEach(function(item) {
+    item.style.display = isSignedIn ? 'none' : 'block';
+  });
+}
+
+function validateCreate(cropper) {
   if (cropper == null || !cropper.hasImage()) {
     alert('No image is selected.');
     return false;
@@ -25,7 +45,7 @@ function validateCreate() {
 }
 
 (function() {
-  const container = document.querySelector('#cropper');
+  const container = document.querySelector('#cropperPane');
   const canvas = document.createElement('canvas');
   canvas.width = container.clientWidth;
   container.appendChild(canvas);
@@ -33,6 +53,20 @@ function validateCreate() {
   renderCanvas.style.display = 'none';
   container.appendChild(renderCanvas);
   cropper = new Cropper(canvas, renderCanvas);
+
+  const signinButton = document.querySelector('#signinButton');
+  signinButton.addEventListener('click', function(e) {
+    if (auth != null) {
+      auth.signIn();
+    }
+  });
+
+  const signoutButton = document.querySelector('#signoutButton');
+  signoutButton.addEventListener('click', function(e) {
+    if (auth != null) {
+      auth.signOut();
+    }
+  });
 
   const imageInput = document.querySelector('#imageInput');
   imageInput.addEventListener('change', function(e) {
@@ -43,6 +77,7 @@ function validateCreate() {
     reader.onload = function(e) {
       const image = new Image();
       image.addEventListener('load', function() {
+        canvas.width = container.clientWidth;
         cropper.setImage(image);
       });
       image.src = e.target.result;
@@ -57,7 +92,7 @@ function validateCreate() {
 
   const doneButton = document.querySelector('#doneButton');
   doneButton.addEventListener('click', function(e) {
-    if (validateCreate()) {
+    if (validateCreate(cropper)) {
       const req = {
           'name': document.querySelector('#nameField').value,
           'data': cropper.render()
