@@ -1,0 +1,94 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-grid/app-grid.html">
+<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+
+<dom-module id="ytman-images-list-loader">
+  <template>
+    <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email"
+        is-authorized="{{isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        app-id="datastore-dot-youtube-manager-196811"
+        name="images"
+        version="v1"
+        on-google-api-load="_onLoadApi"></google-client-loader>
+  </template>
+
+  <script>
+    class YtmanImagesListLoader extends Polymer.Element {
+      static get is() { return 'ytman-images-list-loader'; }
+
+      static get properties() {
+        return {
+          pageSize: Number,
+          images: {
+            type: Array,
+            notify: true,
+            readOnly: true,
+          },
+          _apiLoaded: Boolean,
+          _buffer: Array,
+          _startIndex: {
+            type: Number,
+            value: 0,
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_checkReady(isAuthorized, _apiLoaded)',
+          '_maybeUpdateImages(_startIndex, pageSize)',
+        ]
+      }
+
+      constructor() {
+        super();
+        this._buffer = null;
+        this._token = null;
+        this._finished = false;
+      }
+
+      _onLoadApi() {
+        this._apiLoaded = true;
+      }
+
+      _checkReady(isAuthorized, apiLoaded) {
+        if (isAuthorized && apiLoaded) {
+          this._buffer = [];
+        } else {
+          this._buffer = null;
+        }
+        this._maybeUpdateImages();
+      }
+
+      _maybeUpdateImages() {
+        if (this._buffer == null) {
+          this._setImages([]);
+        } else {
+          this._setImages(
+              this._buffer.slice(
+                  this._startIndex, this._startIndex + this.pageSize));
+          if (!this._finished && this.images.length < this.pageSize) {
+            const request = {};
+            if (this._token != null) {
+              request.token = this._token;
+            }
+            gapi.client.images.list(request).then(
+              response => {
+                this._buffer = this._buffer.concat(response.result.images);
+                this._token = response.result.token || null;
+                this._finished = this._token == null;
+                this._maybeUpdateImages();
+              }
+            )
+          }
+        }
+      }
+    }
+
+    window.customElements.define(
+        YtmanImagesListLoader.is, YtmanImagesListLoader);
+  </script>
+</dom-module>

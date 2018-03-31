@@ -1,0 +1,86 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/google-signin/google-signin.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="ytman-images.html">
+
+<dom-module id="ytman-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: 'Roboto', 'Noto', sans-serif;
+      }
+
+      app-header {
+        background-color: white;
+        --app-header-shadow: {
+          box-shadow: inset 0px 5px 6px -3px rgba(0, 0, 0, 0.2);
+          height: 10px;
+          bottom: -10px;
+        };
+      }
+
+      app-header:not([shadow]) {
+        border-bottom: 1px solid #ddd;
+      }
+
+      iron-pages {
+        padding: 30px;
+      }
+
+      paper-tab {
+        --paper-tab-ink: #d32f2f;
+      }
+
+      paper-tabs {
+        background-color: white;
+        --paper-tabs-selection-bar-color: #d32f2f;
+        text-transform: uppercase;
+      }
+    </style>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}" pattern="/:section" data="{{routeData}}"></app-route>
+
+    <app-header-layout fullbleed>
+      <app-header slot="header" condenses reveals effects="waterfall">
+        <app-toolbar>
+          <div main-title>YouTube video manager</div>
+          <google-signin client-id="[[clientId]]">
+          </google-signin>
+        </app-toolbar>
+        <paper-tabs
+            sticky attr-for-selected="key" selected="{{routeData.section}}">
+          <paper-tab key="videos">Videos</paper-tab>
+          <paper-tab key="images">Images</paper-tab>
+          </paper-tabs>
+      </app-header>
+      <iron-pages attr-for-selected="key" selected="{{routeData.section}}">
+        <div key="videos">Videos</div>
+        <div key="images"><ytman-images></ytman-images></div>
+      </iron-pages>
+    </app-header-layout>
+  </template>
+
+  <script>
+    class YtmanApp extends Polymer.Element {
+      static get is() { return 'ytman-app'; }
+      static get properties() {
+        return {};
+      }
+
+      constructor() {
+        super();
+        this.clientId = "955262123852-c1gthms5mhs36q6njvg6kgqu4f1b09q7.apps.googleusercontent.com";
+      }
+    }
+
+    window.customElements.define(YtmanApp.is, YtmanApp);
+  </script>
+</dom-module>

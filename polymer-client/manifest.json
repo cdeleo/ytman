@@ -1,0 +1,7 @@
+{
+  "name": "ytman",
+  "short_name": "ytman",
+  "description": "YouTube video manager",
+  "start_url": "/",
+  "display": "standalone"
+}

@@ -1,0 +1,61 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-grid/app-grid.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="ytman-images-list-loader.html">
+
+<dom-module id="ytman-images">
+  <template>
+    <style include="app-grid-style">
+      :host {
+        --app-grid-columns: 3;
+        --app-grid-item-height: 100px;
+      }
+
+      ul {
+        padding: 0;
+        list-style: none;
+      }
+    </style>
+
+    <!-- <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email"
+        is-authorized="{{isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        app-id="datastore-dot-youtube-manager-196811"
+        name="images"
+        version="v1"></google-client-loader> -->
+
+    <ytman-images-list-loader page-size=9 images={{images}}>
+        </ytman-images-list-loader>
+
+    <ul class="app-grid">
+      <template is="dom-repeat" items="[[images]]">
+        <li>{{item.name}}</li>
+      </template>
+      <!-- <li>
+        <paper-card header="Card name" image="">
+          <div class="card-content">Content</div>
+          <div class="card-actions">Actions</div>
+        </paper-card>
+      </li>
+      <li>Image 2</li>
+      <li>Image 3</li>
+      <li>Image 4</li>
+      <li>Image 5</li>
+      <li>Image 6</li> -->
+    </ul>
+  </template>
+
+  <script>
+    class YtmanImages extends Polymer.Element {
+      static get is() { return 'ytman-images'; }
+      static get properties() {
+        return {
+        };
+      }
+    }
+
+    window.customElements.define(YtmanImages.is, YtmanImages);
+  </script>
+</dom-module>
