@@ -62,7 +62,7 @@ class ImagesTest(unittest.TestCase):
     ndb.get_context().clear_cache()
 
     self.writer = _FakeImageWriter()
-    self.client = images.ImagesClient(writer=self.writer, page_size=2)
+    self.client = images.ImagesClient(writer=self.writer, default_page_size=2)
 
   def tearDown(self):
     self.testbed.deactivate()
@@ -87,6 +87,14 @@ class ImagesTest(unittest.TestCase):
     self.assert_images(
         self.USER_ID, [(keys[2], self.get_test_image(2))], token=token)
 
+  def test_list_page_size(self):
+    for i in xrange(3):
+      image = self.get_test_image(i)
+      self.client.create(
+          self.USER_ID, image.name, image.data, image.metadata)
+    self.assertEqual(len(self.client.list(self.USER_ID)[0]), 2);
+    self.assertEqual(len(self.client.list(self.USER_ID, page_size=3)[0]), 3);
+
   def test_list_cross_user(self):
     image = self.get_test_image(0)
     key = self.client.create(
@@ -97,7 +105,7 @@ class ImagesTest(unittest.TestCase):
     prefixes = images._get_prefixes('tee test')
     self.assertEqual(set(prefixes), {'t', 'te', 'tee', 'tes', 'test'})
 
-  def run_test_search(self, query):
+  def run_test_search(self, query, page_size=None):
     keys = []
     for i in xrange(3):
       image = self.get_test_image(i)
@@ -105,10 +113,18 @@ class ImagesTest(unittest.TestCase):
           self.client.create(
               self.USER_ID, image.name, image.data, image.metadata).key)
 
-    return keys, self.client.search(self.USER_ID, query)
+    if page_size:
+      kwargs = {'page_size': page_size}
+    else:
+      kwargs = {}
+    return keys, self.client.search(self.USER_ID, query, **kwargs)
 
   def test_search_no_results(self):
-    keys, results = self.run_test_search('absent')
+    _, results = self.run_test_search('absent')
+    self.assertEqual(len(results), 0)
+
+  def test_search_empty_query(self):
+    _, results = self.run_test_search('')
     self.assertEqual(len(results), 0)
 
   def test_search_one_result(self):
@@ -117,9 +133,8 @@ class ImagesTest(unittest.TestCase):
     self.assert_image(keys[1], results[0], self.get_test_image(1))
 
   def test_search_multiple_results(self):
-    self.client._page_size = 3
-    keys, results = self.run_test_search('ima')
-    self.assertEqual(len(results), 3)
+    self.assertEqual(len(self.run_test_search('ima')[1]), 2)
+    self.assertEqual(len(self.run_test_search('ima', page_size=3)[1]), 3)
 
   def test_create(self):
     image = self.get_test_image(0)

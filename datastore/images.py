@@ -72,12 +72,14 @@ class CrossUserError(Exception):
 
 class ImagesClient(object):
 
-  def __init__(self, writer=None, page_size=10):
+  def __init__(self, writer=None, default_page_size=10):
     self._writer = writer if writer else _GcsImageWriter()
-    self._page_size = page_size
+    self._default_page_size = default_page_size
 
-  def list(self, user_id, token=None):
-    fetch_args = {'page_size': self._page_size}
+  def list(self, user_id, token=None, page_size=None):
+    if page_size is None:
+      page_size = self._default_page_size
+    fetch_args = {'page_size': page_size}
     if token:
       fetch_args['start_cursor'] = ndb.Cursor.from_websafe_string(token)
     results, cursor, more = (
@@ -87,11 +89,15 @@ class ImagesClient(object):
             .fetch_page(**fetch_args))
     return results, cursor.to_websafe_string() if cursor and more else None
 
-  def search(self, user_id, query):
+  def search(self, user_id, query, page_size=None):
+    if not query:
+      return []
+    if page_size is None:
+      page_size = self._default_page_size
     query_string = '%s: %s' % (Image.INDEX_FIELD_NAME_PREFIXES, query)
     query_obj = search.Query(
         query_string=query_string,
-        options=search.QueryOptions(limit=self._page_size, ids_only=True))
+        options=search.QueryOptions(limit=page_size, ids_only=True))
     docs = search.Index(Image.get_index_name(user_id)).search(query_obj)
     return ndb.get_multi([self.parse_key(doc.doc_id) for doc in docs])
 

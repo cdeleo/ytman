@@ -28,7 +28,8 @@ class Image(messages.Message):
 
 LIST_RESOURCE = endpoints.ResourceContainer(
     message_types.VoidMessage,
-    token=messages.StringField(1))
+    token=messages.StringField(1),
+    page_size=messages.IntegerField(2))
 
 class ListResponse(messages.Message):
   images = messages.MessageField(Image, 1, repeated=True)
@@ -38,7 +39,8 @@ class ListResponse(messages.Message):
 
 SEARCH_RESOURCE = endpoints.ResourceContainer(
     message_types.VoidMessage,
-    q=messages.StringField(1))
+    q=messages.StringField(1),
+    page_size=messages.IntegerField(2))
 
 class SearchResponse(messages.Message):
   images = messages.MessageField(Image, 1, repeated=True)
@@ -80,8 +82,14 @@ class DeleteResponse(messages.Message):
 @endpoints.api(name='images', version='v1', allowed_client_ids=CLIENT_IDS)
 class ImagesApi(remote.Service):
 
+  MAX_PAGE_SIZE = 25
+
   def __init__(self):
     self.client = images.ImagesClient()
+
+  @classmethod
+  def get_page_size(cls, page_size):
+    return min((page_size, cls.MAX_PAGE_SIZE)) if page_size else None
 
   @classmethod
   def image_model_to_proto(cls, model):
@@ -114,15 +122,6 @@ class ImagesApi(remote.Service):
       raise endpoints.UnauthorizedException
     return user.user_id()
 
-  def common_list_handler(self, token=None):
-    images, next_token = self.client.list(
-        self.get_current_user_id(), token=token if token else None)
-    resp = ListResponse()
-    resp.images = [self.image_model_to_proto(r) for r in images]
-    if next_token:
-      resp.token = next_token
-    return resp
-
   @endpoints.method(
       LIST_RESOURCE,
       ListResponse,
@@ -130,25 +129,29 @@ class ImagesApi(remote.Service):
       http_method='GET',
       name='list')
   def list_handler(self, req):
-    return self.common_list_handler()
-
-  @endpoints.method(
-      LIST_RESOURCE,
-      ListResponse,
-      path='list/{token}',
-      http_method='GET',
-      name='list_continue')
-  def list_continue_handler(self, req):
-    return self.common_list_handler(token=req.token)
+    kwargs = {}
+    if req.token:
+      kwargs['token'] = req.token
+    if req.page_size:
+      kwargs['page_size'] = self.get_page_size(req.page_size)
+    images, next_token = self.client.list(self.get_current_user_id(), **kwargs)
+    resp = ListResponse()
+    resp.images = [self.image_model_to_proto(r) for r in images]
+    if next_token:
+      resp.token = next_token
+    return resp
 
   @endpoints.method(
       SEARCH_RESOURCE,
       SearchResponse,
-      path='search/{q}',
+      path='search',
       http_method='GET',
       name='search')
   def search_handler(self, req):
-    images = self.client.search(self.get_current_user_id(), req.q)
+    kwargs = {}
+    if req.page_size:
+      kwargs['page_size'] = self.get_page_size(req.page_size)
+    images = self.client.search(self.get_current_user_id(), req.q, **kwargs)
     resp = SearchResponse()
     resp.images = [self.image_model_to_proto(r) for r in images]
     return resp
