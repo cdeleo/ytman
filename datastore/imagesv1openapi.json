@@ -148,26 +148,11 @@
             "in": "query",
             "name": "token",
             "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response",
-            "schema": {
-              "$ref": "#/definitions/ImagesApiListResponse"
-            }
-          }
-        }
-      }
-    },
-    "/images/v1/list/{token}": {
-      "get": {
-        "operationId": "ImagesApi_listContinueHandler",
-        "parameters": [
+          },
           {
-            "in": "path",
-            "name": "token",
-            "required": true,
+            "format": "int64",
+            "in": "query",
+            "name": "page_size",
             "type": "string"
           }
         ],
@@ -181,14 +166,19 @@
         }
       }
     },
-    "/images/v1/search/{q}": {
+    "/images/v1/search": {
       "get": {
         "operationId": "ImagesApi_searchHandler",
         "parameters": [
           {
-            "in": "path",
+            "in": "query",
             "name": "q",
-            "required": true,
+            "type": "string"
+          },
+          {
+            "format": "int64",
+            "in": "query",
+            "name": "page_size",
             "type": "string"
           }
         ],
