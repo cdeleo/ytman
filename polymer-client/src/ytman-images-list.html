@@ -1,0 +1,34 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="ytman-images-picker.html">
+
+<dom-module id="ytman-images-list">
+  <template>
+    <style>
+      paper-fab {
+        position: fixed;
+        right: 30px;
+        bottom: 30px;
+      }
+    </style>
+
+    <ytman-images-picker></ytman-images-picker>
+    <paper-fab icon="add" on-click="_goAdd"></paper-fab>
+  </template>
+
+  <script>
+    class YtmanImagesList extends Polymer.Element {
+      static get is() { return 'ytman-images-list'; }
+      static get properties() {
+        return {};
+      }
+
+      _goAdd() {
+        this.set('route.path', '/add');
+      }
+    }
+
+    window.customElements.define(YtmanImagesList.is, YtmanImagesList);
+  </script>
+</dom-module>

@@ -1,0 +1,329 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="ytman-images-cropper">
+  <template>
+    <style>
+      #renderCanvas {
+        display: none;
+      }
+    </style>
+
+    <div id="container">
+      <canvas
+          id="canvas"
+          on-mousedown="_onMouseDown"
+          on-mouseup="_onMouseUp"
+          on-mouseleave="_onMouseLeave"
+          on-mousemove="_onMouseMove"></canvas>
+      <canvas id="renderCanvas"></canvas>
+    </div>
+  </template>
+
+  <script>
+    const _Elements = Object.freeze({
+        NONE: 'none',
+        MASK: 'mask',
+        NW_HANDLE: 'nwHandle',
+        NE_HANDLE: 'neHandle',
+        SE_HANDLE: 'seHandle',
+        SW_HANDLE: 'swHandle',
+    });
+
+    const _HANDLE_SIZE = 10;
+    const _PADDING = 10;
+    const _TARGET_WIDTH = 1280;
+    const _TARGET_HEIGHT = 720;
+    const _TARGET_RATIO = _TARGET_WIDTH / _TARGET_HEIGHT;
+
+    const _CURSOR_MAP = new Map([
+        [_Elements.NONE, 'default'],
+        [_Elements.MASK, 'move'],
+        [_Elements.NW_HANDLE, 'nw-resize'],
+        [_Elements.NE_HANDLE, 'ne-resize'],
+        [_Elements.SE_HANDLE, 'se-resize'],
+        [_Elements.SW_HANDLE, 'sw-resize'],
+    ]);
+
+    class _Handle {
+      constructor(x, y, element) {
+        this.x = x;
+        this.y = y;
+        this.element = element;
+      }
+
+      addPath(c) {
+        c.rect(
+            this.x - _HANDLE_SIZE / 2,
+            this.y - _HANDLE_SIZE / 2,
+            _HANDLE_SIZE,
+            _HANDLE_SIZE);
+      }
+    }
+
+    class _Mask {
+      constructor(x, y, width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.element = _Elements.MASK;
+      }
+
+      get height() {
+        return this.width / _TARGET_RATIO;
+      }
+
+      addPath(c) {
+        c.rect(this.x, this.y, this.width, this.height);
+      }
+    }
+
+    class YtmanImagesCropper extends Polymer.Element {
+      static get is() { return 'ytman-images-cropper'; }
+
+      static get properties() {
+        return {
+          image: {
+            type: Object,
+            observer: '_onImageChanged',
+          },
+          _mask: {
+            type: Object,
+            readOnly: true,
+          },
+          _handles: {
+            type: Array,
+            computed: '_getHandles(_mask)',
+          },
+          _imageScale: {
+            type: Number,
+            computed: '_getImageScale(image)',
+          },
+          _draggingElement: {
+            type: Object,
+            value: _Elements.NONE,
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_onDraw(image, _mask)',
+        ];
+      }
+
+      // Public
+
+      resetMask() {
+        if (this.image == null) {
+          return;
+        }
+        this._set_mask(this._getMaximumMask());
+      }
+
+      render() {
+        if (this.image == null) {
+          return null;
+        }
+        const scaledMask = new _Mask(
+            this._mask.x / this._imageScale,
+            this._mask.y / this._imageScale,
+            this._mask.width / this._imageScale);
+        if (scaledMask.width >= _TARGET_WIDTH) {
+          this.$.renderCanvas.width = _TARGET_WIDTH;
+          this.$.renderCanvas.height = _TARGET_HEIGHT;
+        } else {
+          this.$.renderCanvas.width = scaledMask.width;
+          this.$.renderCanvas.height = scaledMask.height;
+        }
+        const renderC = this.$.renderCanvas.getContext('2d');
+        renderC.setTransform(1, 0, 0, 1, 0, 0);
+        renderC.translate(-1 * scaledMask.x, -1 * scaledMask.y);
+        const renderScale = this.$.renderCanvas.width / scaledMask.width;
+        renderC.scale(renderScale, renderScale);
+        renderC.drawImage(this.image, 0, 0);
+        return this.$.renderCanvas.toDataURL();
+      }
+
+      // Private
+
+      ready() {
+        super.ready();
+        this._c = this.$.canvas.getContext('2d');
+        this.$.canvas.width = 884; //this.$.container.width;
+      }
+
+      get _areaWidth() {
+        return this.$.canvas.width - 2 * _PADDING;
+      }
+
+      get _areaHeight() {
+        return this.$.canvas.height - 2 * _PADDING;
+      }
+
+      _onImageChanged(image) {
+        this.$.canvas.height = this._imageScale * image.height + 2 * _PADDING;
+        this._c.setTransform(1, 0, 0, 1, _PADDING, _PADDING);
+        this.resetMask();
+      }
+
+      _onMouseDown(e) {
+        if (this._mask == null) {
+          return;
+        }
+        this._draggingElement = this._pickFromEvent(e);
+      }
+
+      _onMouseUp() {
+        this._draggingElement = _Elements.NONE;
+      }
+
+      _onMouseLeave() {
+        this._draggingElement = _Elements.NONE;
+      }
+
+      _onMouseMove(e) {
+        if (this._mask == null) {
+          return;
+        }
+        switch (this._draggingElement) {
+          case _Elements.NONE:
+            const element = this._pickFromEvent(e);
+            this.$.canvas.style.cursor = _CURSOR_MAP.get(element);
+            break;
+          case _Elements.MASK:
+            this._updateMask(e.movementX, e.movementY, 0);
+            break;
+          case _Elements.NW_HANDLE:
+            {
+              const dw = -1 * e.movementX;
+              const dy = -1 * dw / _TARGET_RATIO;
+              this._updateMask(e.movementX, dy, dw);
+            }
+            break;
+          case _Elements.NE_HANDLE:
+            {
+              const dw = e.movementX;
+              const dy = -1 * dw / _TARGET_RATIO;
+              this._updateMask(0, dy, dw);
+            }
+            break;
+          case _Elements.SE_HANDLE:
+            this._updateMask(0, 0, e.movementX);
+            break;
+          case _Elements.SW_HANDLE:
+            this._updateMask(e.movementX, 0, -1 * e.movementX);
+            break;
+        }
+      }
+
+      _getHandles(mask) {
+        return [
+            new _Handle(mask.x, mask.y, _Elements.NW_HANDLE),
+            new _Handle(mask.x + mask.width, mask.y, _Elements.NE_HANDLE),
+            new _Handle(
+                mask.x + mask.width, mask.y + mask.height, _Elements.SE_HANDLE),
+            new _Handle(mask.x, mask.y + mask.height, _Elements.SW_HANDLE),
+        ];
+      }
+
+      _getImageScale(image) {
+        return (this.$.canvas.width - 2 * _PADDING) / image.width;
+      }
+
+      _getMaximumMask() {
+        if (this.image == null) {
+          return null;
+        }
+        if (this._areaWidth / this._areaHeight > _TARGET_RATIO) {
+          let width = this._areaHeight * _TARGET_RATIO;
+          let x = (this._areaWidth - width) / 2;
+          return new _Mask(x, 0, width);
+        } else {
+          let y = (this._areaHeight - this._areaWidth / _TARGET_RATIO) / 2;
+          return new _Mask(0, y, this._areaWidth);
+        }
+      }
+
+      _pick(x, y) {
+        for (const element of this._handles.concat(this._mask)) {
+          this._c.beginPath();
+          element.addPath(this._c);
+          if (this._c.isPointInPath(x, y)) {
+            return element.element;
+          }
+        }
+        return _Elements.NONE;
+      }
+
+      _pickFromEvent(e) {
+        let x = e.clientX - this.$.canvas.getBoundingClientRect().left;
+        let y = e.clientY - this.$.canvas.getBoundingClientRect().top;
+        return this._pick(x, y);
+      }
+
+      _updateMask(dx, dy, dw) {
+        if (this._mask == null) {
+          return;
+        }
+        let x = this._mask.x + dx;
+        let y = this._mask.y + dy;
+        let width = this._mask.width + dw;
+
+        if (x < 0) {
+          width = this._mask.width;
+          x = 0;
+        }
+        if (y < 0) {
+          width = this._mask.width;
+          y = 0;
+        }
+        if (x + width > this._areaWidth) {
+          width = this._mask.width;
+          x = this._areaWidth - width;
+        }
+        if (y + width / _TARGET_RATIO > this._areaHeight) {
+          width = this._mask.width;
+          y = this._areaHeight - (width / _TARGET_RATIO);
+        }
+
+        this._set_mask(new _Mask(x, y, width));
+      }
+
+      _drawImage() {
+        this._c.save();
+        this._c.clearRect(
+            -1 * _PADDING,
+            -1 * _PADDING,
+            this.$.canvas.width,
+            this.$.canvas.height);
+        this._c.scale(this._imageScale, this._imageScale);
+        this._c.drawImage(this.image, 0, 0);
+        this._c.restore();
+      }
+
+      _drawMask() {
+        this._c.fillStyle = 'rgba(64, 64, 64, 0.5)';
+        this._c.beginPath();
+        this._mask.addPath(this._c);
+        this._c.fill();
+      }
+
+      _drawHandles() {
+        this._c.fillStyle = 'rgb(64, 64, 64)';
+        this._c.beginPath();
+        this._handles.forEach(handle => handle.addPath(this._c))
+        this._c.fill();
+      }
+
+      _onDraw(image, mask) {
+        if (image != undefined && mask != undefined) {
+          this._drawImage();
+          this._drawMask();
+          this._drawHandles();
+        }
+      }
+    }
+
+    window.customElements.define(YtmanImagesCropper.is, YtmanImagesCropper);
+  </script>
+</dom-module>

@@ -46,7 +46,10 @@
 
     <app-location route="{{route}}"></app-location>
     <app-route
-        route="{{route}}" pattern="/:section" data="{{routeData}}"></app-route>
+        route="{{route}}"
+        pattern="/:section"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
 
     <app-header-layout fullbleed>
       <app-header slot="header" condenses reveals effects="waterfall">
@@ -63,7 +66,9 @@
       </app-header>
       <iron-pages attr-for-selected="key" selected="{{routeData.section}}">
         <div key="videos">Videos</div>
-        <div key="images"><ytman-images></ytman-images></div>
+        <div key="images">
+          <ytman-images route="{{subroute}}"></ytman-images>
+        </div>
       </iron-pages>
     </app-header-layout>
   </template>

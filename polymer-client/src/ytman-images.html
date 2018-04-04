@@ -1,50 +1,19 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/app-grid/app-grid.html">
-<link rel="import" href="../bower_components/paper-card/paper-card.html">
-<link rel="import" href="ytman-images-list-loader.html">
+<link rel="import" href="ytman-images-add.html">
+<link rel="import" href="ytman-images-list.html">
 
 <dom-module id="ytman-images">
   <template>
-    <style include="app-grid-style">
-      :host {
-        --app-grid-columns: 3;
-        --app-grid-item-height: 100px;
-      }
+    <app-route
+        route="{{route}}"
+        pattern="/:action"
+        active="{{routeActive}}"
+        data="{{routeData}}"></app-route>
 
-      ul {
-        padding: 0;
-        list-style: none;
-      }
-    </style>
-
-    <!-- <google-signin-aware
-        scopes="https://www.googleapis.com/auth/userinfo.email"
-        is-authorized="{{isAuthorized}}"></google-signin-aware>
-
-    <google-client-loader
-        app-id="datastore-dot-youtube-manager-196811"
-        name="images"
-        version="v1"></google-client-loader> -->
-
-    <ytman-images-list-loader page-size=9 images={{images}}>
-        </ytman-images-list-loader>
-
-    <ul class="app-grid">
-      <template is="dom-repeat" items="[[images]]">
-        <li>{{item.name}}</li>
-      </template>
-      <!-- <li>
-        <paper-card header="Card name" image="">
-          <div class="card-content">Content</div>
-          <div class="card-actions">Actions</div>
-        </paper-card>
-      </li>
-      <li>Image 2</li>
-      <li>Image 3</li>
-      <li>Image 4</li>
-      <li>Image 5</li>
-      <li>Image 6</li> -->
-    </ul>
+    <iron-pages attr-for-selected="key" selected="{{page}}">
+      <div key="main"><ytman-images-list></ytman-images-list></div>
+      <div key="add"><ytman-images-add></ytman-images-add></div>
+    </iron-pages>
   </template>
 
   <script>
@@ -52,7 +21,23 @@
       static get is() { return 'ytman-images'; }
       static get properties() {
         return {
+          route: {
+            type: Object,
+            notify: true,
+          },
+          page: {
+            type: String,
+            computed: '_getPage(routeActive, routeData)',
+          },
         };
+      }
+
+      _getPage(routeActive, routeData) {
+        if (routeActive) {
+          return routeData.action;
+        } else {
+          return 'main';
+        }
       }
     }
 

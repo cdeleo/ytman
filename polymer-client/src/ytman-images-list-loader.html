@@ -27,24 +27,51 @@
             notify: true,
             readOnly: true,
           },
+          hasPrevious: {
+            type: Boolean,
+            computed: '_getHasPrevious(_buffer, _startIndex)',
+            notify: true,
+          },
+          hasNext: {
+            type: Boolean,
+            computed: '_getHasNext(_buffer, _startIndex, pageSize, _finished)',
+            notify: true,
+          },
           _apiLoaded: Boolean,
           _buffer: Array,
           _startIndex: {
             type: Number,
             value: 0,
           },
+          _finished: Boolean,
         };
       }
 
       static get observers() {
         return [
           '_checkReady(isAuthorized, _apiLoaded)',
-          '_maybeUpdateImages(_startIndex, pageSize)',
+          '_maybeUpdate(_startIndex, pageSize)',
         ]
+      }
+
+      previousPage() {
+        if (this.hasPrevious) {
+          this._startIndex = Math.max(0, this._startIndex - this.pageSize);
+        }
+      }
+
+      nextPage() {
+        if (this.hasNext) {
+          this._startIndex += this.pageSize;
+        }
       }
 
       constructor() {
         super();
+        this._clearData();
+      }
+
+      _clearData() {
         this._buffer = null;
         this._token = null;
         this._finished = false;
@@ -58,12 +85,20 @@
         if (isAuthorized && apiLoaded) {
           this._buffer = [];
         } else {
-          this._buffer = null;
+          this._clearData();
         }
-        this._maybeUpdateImages();
+        this._maybeUpdate();
       }
 
-      _maybeUpdateImages() {
+      _getHasPrevious(buffer, startIndex) {
+        return buffer != null && startIndex > 0;
+      }
+
+      _getHasNext(buffer, startIndex, pageSize, finished) {
+        return !finished || (startIndex + pageSize) < buffer.length;
+      }
+
+      _maybeUpdate() {
         if (this._buffer == null) {
           this._setImages([]);
         } else {
@@ -71,7 +106,7 @@
               this._buffer.slice(
                   this._startIndex, this._startIndex + this.pageSize));
           if (!this._finished && this.images.length < this.pageSize) {
-            const request = {};
+            const request = {page_size: this.pageSize};
             if (this._token != null) {
               request.token = this._token;
             }
@@ -80,7 +115,7 @@
                 this._buffer = this._buffer.concat(response.result.images);
                 this._token = response.result.token || null;
                 this._finished = this._token == null;
-                this._maybeUpdateImages();
+                this._maybeUpdate();
               }
             )
           }
