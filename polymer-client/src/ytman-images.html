@@ -11,8 +11,15 @@
         data="{{routeData}}"></app-route>
 
     <iron-pages attr-for-selected="key" selected="{{page}}">
-      <div key="main"><ytman-images-list></ytman-images-list></div>
-      <div key="add"><ytman-images-add></ytman-images-add></div>
+      <div key="main">
+        <ytman-images-list
+            id="imagesList" on-add-clicked="_goAdd"></ytman-images-list>
+      </div>
+      <div key="add">
+        <ytman-images-add
+            on-back-clicked="_goList"
+            on-upload-done="_onUploadDone"></ytman-images-add>
+      </div>
     </iron-pages>
   </template>
 
@@ -38,6 +45,19 @@
         } else {
           return 'main';
         }
+      }
+
+      _goList() {
+        this.set('route.path', '');
+      }
+
+      _onUploadDone() {
+        this.$.imagesList.reload();
+        this._goList();
+      }
+
+      _goAdd() {
+        this.set('route.path', '/add');
       }
     }
 

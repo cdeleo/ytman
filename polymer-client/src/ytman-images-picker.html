@@ -60,6 +60,10 @@
         return {};
       }
 
+      reload() {
+        this.$.imagesList.reload();
+      }
+
       _goPrevious() {
         this.$.imagesList.previousPage();
       }

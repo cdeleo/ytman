@@ -8,15 +8,15 @@
       }
     </style>
 
-    <div id="container">
-      <canvas
-          id="canvas"
-          on-mousedown="_onMouseDown"
-          on-mouseup="_onMouseUp"
-          on-mouseleave="_onMouseLeave"
-          on-mousemove="_onMouseMove"></canvas>
-      <canvas id="renderCanvas"></canvas>
-    </div>
+    <canvas
+        id="canvas"
+        width=800
+        height=0
+        on-mousedown="_onMouseDown"
+        on-mouseup="_onMouseUp"
+        on-mouseleave="_onMouseLeave"
+        on-mousemove="_onMouseMove"></canvas>
+    <canvas id="renderCanvas"></canvas>
   </template>
 
   <script>
@@ -84,6 +84,7 @@
         return {
           image: {
             type: Object,
+            notify: true,
             observer: '_onImageChanged',
           },
           _mask: {
@@ -149,7 +150,6 @@
       ready() {
         super.ready();
         this._c = this.$.canvas.getContext('2d');
-        this.$.canvas.width = 884; //this.$.container.width;
       }
 
       get _areaWidth() {
@@ -160,7 +160,7 @@
         return this.$.canvas.height - 2 * _PADDING;
       }
 
-      _onImageChanged(image) {
+      _onImageChanged(image, _imageScale) {
         this.$.canvas.height = this._imageScale * image.height + 2 * _PADDING;
         this._c.setTransform(1, 0, 0, 1, _PADDING, _PADDING);
         this.resetMask();

@@ -1,20 +1,73 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="ytman-images-cropper.html">
 
 <dom-module id="ytman-images-add">
   <template>
-    <input type="file" accept="image/*" on-change="_onImageChanged" />
-    <ytman-images-cropper id="cropper"></ytman-images-cropper>
+    <style>
+      #container {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      #fileInput {
+        display: none;
+      }
+    </style>
+
+    <input type="file"
+        id="fileInput"
+        accept="image/*"
+        on-change="_onImageChange" />
+    <paper-icon-button icon="arrow-back" on-click="_goBack"></paper-icon-button>
+    <div id="container">
+      <div>
+        <ytman-images-cropper
+            id="cropper" image="{{image}}"></ytman-images-cropper>
+      </div>
+      <paper-button raised on-click="_onUploadClick">Upload</paper-button>
+      <paper-button raised on-click="_onResetClick">Reset</paper-button>
+      <paper-input
+          id="nameInput"
+          label="name"
+          required
+          auto-validate
+          error-message="required"
+          value="{{name}}"></paper-input>
+      <paper-input
+          id="midInput"
+          label="multiverse id"
+          auto-validate
+          allowed-pattern="[0-9]"
+          value="{{mid}}"></paper-input>
+      <paper-button
+          raised
+          disabled=[[!_isDoneEnabled]]
+          on-click="_onDoneClick">Done</paper-button>
+    </div>
   </template>
 
   <script>
     class YtmanImagesAdd extends Polymer.Element {
       static get is() { return 'ytman-images-add'; }
       static get properties() {
-        return {};
+        return {
+          _isDoneEnabled: {
+            type: Boolean,
+            value: false,
+            computed: '_getIsDoneEnabled(image, name)',
+          },
+        };
       }
 
-      _onImageChanged(e) {
+      _goBack() {
+        this.dispatchEvent(new CustomEvent('back-clicked'));
+      }
+
+      _onImageChange(e) {
         if (e.target.files.length == 0) {
           return;
         }
@@ -27,6 +80,37 @@
           image.src = e.target.result;
         }
         reader.readAsDataURL(e.target.files[0]);
+      }
+
+      _onUploadClick() {
+        this.$.fileInput.click();
+      }
+
+      _onResetClick() {
+        this.$.cropper.resetMask();
+      }
+
+      _onDoneClick() {
+        const req = {
+            'name': this.name,
+            'data': this.$.cropper.render()
+        };
+        if (this._isStringValid(this.mid)) {
+          req.metadata = [
+            {'key': 'mid', 'value': parseInt(this.mid).toString()},
+          ];
+        }
+        gapi.client.images.create(req).execute(resp => {
+          this.dispatchEvent(new CustomEvent('upload-done'));
+        });
+      }
+
+      _getIsDoneEnabled(image, name) {
+        return image != null && this._isStringValid(name);
+      }
+
+      _isStringValid(value) {
+        return value != undefined && value != null && value != '';
       }
     }
 

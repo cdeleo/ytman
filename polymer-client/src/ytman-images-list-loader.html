@@ -66,6 +66,14 @@
         }
       }
 
+      reload() {
+        console.log('reloading');
+        this._clearData();
+        this._buffer = []
+        this._startIndex = 0;
+        this._maybeUpdate();
+      }
+
       constructor() {
         super();
         this._clearData();

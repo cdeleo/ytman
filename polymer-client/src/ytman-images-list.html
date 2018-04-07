@@ -13,7 +13,7 @@
       }
     </style>
 
-    <ytman-images-picker></ytman-images-picker>
+    <ytman-images-picker id="imagesPicker"></ytman-images-picker>
     <paper-fab icon="add" on-click="_goAdd"></paper-fab>
   </template>
 
@@ -24,8 +24,12 @@
         return {};
       }
 
+      reload() {
+        this.$.imagesPicker.reload();
+      }
+
       _goAdd() {
-        this.set('route.path', '/add');
+        this.dispatchEvent(new CustomEvent('add-clicked'));
       }
     }
 
