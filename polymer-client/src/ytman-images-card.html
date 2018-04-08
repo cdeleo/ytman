@@ -1,0 +1,81 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="ytman-images-list-loader.html">
+
+<dom-module id="ytman-images-card">
+  <template>
+    <style include="iron-flex iron-flex-alignment"></style>
+    <style>
+      paper-card {
+        width: 250px;
+        margin: 10px;
+      }
+
+      .card-content {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-right: 2px;
+      }
+
+      .delete {
+        color: lightgray;
+      }
+
+      .delete:hover {
+        color: black;
+      }
+    </style>
+
+    <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email"
+        is-authorized="{{isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        app-id="datastore-dot-youtube-manager-196811"
+        name="images"
+        version="v1"></google-client-loader>
+
+    <paper-card
+        image="[[item.url]]"
+        placeholder-image=[[placeholderImage]]
+        preload-image=true>
+      <div class="card-content layout horizontal center">
+        <span>[[item.name]]</span>
+        <span class="flex"></span>
+        <paper-icon-button
+            class="delete"
+            icon="delete"
+            on-click="_onDelete"></paper-icon-button>
+      </div>
+    </paper-card>
+  </template>
+
+  <script>
+    class YtmanImagesCard extends Polymer.Element {
+      static get is() { return 'ytman-images-card'; }
+      static get properties() {
+        return {
+          item: Object,
+          placeholderImage: {
+            type: String,
+            value: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAACNCAIAAAARqfATAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gQIBQwBehUjdwAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAABI0lEQVR42u3SAQ0AAAjDMMC/uxvCBgmthGWdpOCHkQC7g93B7mB3sDvYHewOdge7g93B7tgd7A52B7uD3cHuYHewO9gd7A52x+5gd7A72B3sDnYHu4Pdwe5gd7A7dge7g93B7mB3sDvYHewOdge7g92xO9gd7A52B7uD3cHuYHewO9gd7A52x+5gd7A72B3sDnYHu4Pdwe5gd7A7dge7g93B7mB3sDvYHewOdge7g92xO9gd7A52B7uD3cHuYHewO9gd7I7dwe5gd7A72B3sDnYHu4Pdwe5gd+wOdge7g93B7mB3sDvYHewOdge7g92xO9gd7A52B7uD3cHuYHewO9gd7I7dwe5gd7A72B3sDnYHu4Pdwe5gd+wOdge7g93B7nDCAnzfA5PrdUIOAAAAAElFTkSuQmCC",
+          },
+        };
+      }
+
+      _onDelete() {
+        const req = {
+            'key': this.item.key,
+        };
+        gapi.client.images.delete(req).execute(resp => {
+          this.dispatchEvent(new CustomEvent('deleted'));
+        });
+      }
+    }
+
+    window.customElements.define(YtmanImagesCard.is, YtmanImagesCard);
+  </script>
+</dom-module>
