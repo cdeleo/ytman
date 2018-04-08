@@ -1,5 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="ytman-images-card.html">
 <link rel="import" href="ytman-images-list-loader.html">
 
@@ -14,23 +16,10 @@
         margin-bottom: 30px;
       }
 
-      paper-card {
-        width: 250px;
-        margin: 10px;
-      }
-
-      .card-content {
-        padding-top: 2px;
-        padding-bottom: 2px;
-        padding-right: 2px;
-      }
-
-      .delete {
-        color: lightgray;
-      }
-
-      .delete:hover {
-        color: black;
+      paper-input {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
       }
     </style>
 
@@ -50,30 +39,73 @@
         has-previous={{hasPrevious}}
         has-next={{hasNext}}></ytman-images-list-loader>
 
-    <div class="main layout horizontal wrap center-justified">
-      <template is="dom-repeat" items="[[images]]">
-        <ytman-images-card
-            item=[[item]] on-deleted="reload"></ytman-images-card>
-      </template>
-    </div>
+    <paper-input value={{_search}}>
+      <iron-icon icon="search" slot="prefix"></iron-icon>
+    </paper-input>
 
-    <div class="main layout horizontal center-justified">
-      <paper-button
-          disabled=[[!hasPrevious]]
-          on-click="_goPrevious">Previous</paper-button>
-      <paper-button disabled=[[!hasNext]] on-click="_goNext">Next</paper-button>
-    </div>
+    <iron-pages attr-for-selected="key" selected="[[_mode]]">
+      <div key="list">
+        <div class="main layout horizontal wrap center-justified">
+          <template is="dom-repeat" items="[[images]]">
+            <ytman-images-card
+                item=[[item]] on-deleted="reload"></ytman-images-card>
+          </template>
+        </div>
+
+        <div class="main layout horizontal center-justified">
+          <paper-button
+              disabled=[[!hasPrevious]]
+              on-click="_goPrevious">Previous</paper-button>
+          <paper-button
+              disabled=[[!hasNext]] on-click="_goNext">Next</paper-button>
+        </div>
+      </div>
+      <div key="search">
+        <div class="main layout horizontal wrap center-justified">
+          <template is="dom-repeat" items="[[searchImages]]">
+            <ytman-images-card
+                item=[[item]] on-deleted="_reloadSearch"></ytman-images-card>
+          </template>
+        </div>
+      </div>
+    </iron-pages>
   </template>
 
   <script>
     class YtmanImagesPicker extends Polymer.Element {
       static get is() { return 'ytman-images-picker'; }
       static get properties() {
-        return {};
+        return {
+          _mode: {
+            type: String,
+            value: 'list',
+            computed: '_getMode(_search)',
+          },
+          _search: String,
+          _nextSearchReq: {
+            type: Number,
+            value: 1,
+          },
+          _lastSearchResp: {
+            type: Number,
+            value: 0,
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_onSearchChange(_search)',
+        ];
       }
 
       reload() {
         this.$.imagesList.reload();
+      }
+
+      _reloadSearch() {
+        this._onSearchChange(this._search);
+        this.reload();
       }
 
       _goPrevious() {
@@ -82,6 +114,29 @@
 
       _goNext() {
         this.$.imagesList.nextPage();
+      }
+
+      _getMode(search) {
+        if (search == null || search == '') {
+          return 'list';
+        } else {
+          return 'search';
+        }
+      }
+
+      _onSearchChange(search) {
+        const req = {
+          'q': search,
+          'page-size': 12,
+        };
+        const searchReq = this._nextSearchReq;
+        this._nextSearchReq += 1;
+        gapi.client.images.search(req).execute(resp => {
+          if (searchReq > this._lastSearchResp) {
+            this.searchImages = resp.images;
+            this._lastSearchResp = searchReq;
+          }
+        });
       }
     }
 
