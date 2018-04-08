@@ -161,9 +161,13 @@
       }
 
       _onImageChanged(image, _imageScale) {
-        this.$.canvas.height = this._imageScale * image.height + 2 * _PADDING;
-        this._c.setTransform(1, 0, 0, 1, _PADDING, _PADDING);
-        this.resetMask();
+        if (image == null) {
+          this.$.canvas.height = 0;
+        } else {
+          this.$.canvas.height = this._imageScale * image.height + 2 * _PADDING;
+          this._c.setTransform(1, 0, 0, 1, _PADDING, _PADDING);
+          this.resetMask();
+        }
       }
 
       _onMouseDown(e) {
@@ -227,7 +231,11 @@
       }
 
       _getImageScale(image) {
-        return (this.$.canvas.width - 2 * _PADDING) / image.width;
+        if (image == null) {
+          return 1;
+        } else {
+          return (this.$.canvas.width - 2 * _PADDING) / image.width;
+        }
       }
 
       _getMaximumMask() {

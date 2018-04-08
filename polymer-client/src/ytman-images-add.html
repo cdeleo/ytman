@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
@@ -18,35 +19,39 @@
       }
     </style>
 
-    <input type="file"
-        id="fileInput"
-        accept="image/*"
-        on-change="_onImageChange" />
     <paper-icon-button icon="arrow-back" on-click="_goBack"></paper-icon-button>
     <div id="container">
-      <div>
-        <ytman-images-cropper
-            id="cropper" image="{{image}}"></ytman-images-cropper>
-      </div>
-      <paper-button raised on-click="_onUploadClick">Upload</paper-button>
-      <paper-button raised on-click="_onResetClick">Reset</paper-button>
-      <paper-input
-          id="nameInput"
-          label="name"
-          required
-          auto-validate
-          error-message="required"
-          value="{{name}}"></paper-input>
-      <paper-input
-          id="midInput"
-          label="multiverse id"
-          auto-validate
-          allowed-pattern="[0-9]"
-          value="{{mid}}"></paper-input>
-      <paper-button
-          raised
-          disabled=[[!_isDoneEnabled]]
-          on-click="_onDoneClick">Done</paper-button>
+      <iron-form id="addForm">
+        <form>
+          <input type="file"
+              id="fileInput"
+              accept="image/*"
+              on-change="_onImageChange" />
+          <div>
+            <ytman-images-cropper
+                id="cropper" image="{{image}}"></ytman-images-cropper>
+          </div>
+          <paper-button raised on-click="_onSelectClick">Select</paper-button>
+          <paper-button raised on-click="_onResetClick">Reset</paper-button>
+          <paper-input
+              id="nameInput"
+              label="name"
+              required
+              auto-validate
+              error-message="required"
+              value="{{name}}"></paper-input>
+          <paper-input
+              id="midInput"
+              label="multiverse id"
+              auto-validate
+              allowed-pattern="[0-9]"
+              value="{{mid}}"></paper-input>
+          <paper-button
+              raised
+              disabled=[[!_isDoneEnabled]]
+              on-click="_onUploadClick">Upload</paper-button>
+        </form>
+      </iron-form>
     </div>
   </template>
 
@@ -64,11 +69,13 @@
       }
 
       _goBack() {
+        this.$.addForm.reset();
         this.dispatchEvent(new CustomEvent('back-clicked'));
       }
 
       _onImageChange(e) {
         if (e.target.files.length == 0) {
+          this.$.cropper.image = null;
           return;
         }
         const reader = new FileReader();
@@ -82,7 +89,7 @@
         reader.readAsDataURL(e.target.files[0]);
       }
 
-      _onUploadClick() {
+      _onSelectClick() {
         this.$.fileInput.click();
       }
 
@@ -90,7 +97,7 @@
         this.$.cropper.resetMask();
       }
 
-      _onDoneClick() {
+      _onUploadClick() {
         const req = {
             'name': this.name,
             'data': this.$.cropper.render()
@@ -101,6 +108,7 @@
           ];
         }
         gapi.client.images.create(req).execute(resp => {
+          this.$.addForm.reset();
           this.dispatchEvent(new CustomEvent('upload-done'));
         });
       }
