@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/app-grid/app-grid.html">
 <link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+<link rel="import" href="ytman-base-list-loader.html">
 
 <dom-module id="ytman-images-list-loader">
   <template>
@@ -16,118 +16,35 @@
   </template>
 
   <script>
-    class YtmanImagesListLoader extends Polymer.Element {
+    class YtmanImagesListLoader extends YtmanBaseListLoader {
       static get is() { return 'ytman-images-list-loader'; }
-
       static get properties() {
-        return {
-          pageSize: Number,
-          images: {
-            type: Array,
-            notify: true,
-            readOnly: true,
-          },
-          hasPrevious: {
-            type: Boolean,
-            computed: '_getHasPrevious(_buffer, _startIndex)',
-            notify: true,
-          },
-          hasNext: {
-            type: Boolean,
-            computed: '_getHasNext(_buffer, _startIndex, pageSize, _finished)',
-            notify: true,
-          },
-          _apiLoaded: Boolean,
-          _buffer: Array,
-          _startIndex: {
-            type: Number,
-            value: 0,
-          },
-          _finished: Boolean,
+        const p = super.properties;
+        p.images = {
+          type: Array,
+          notify: true,
+          computed: '_getImages(_items)',
         };
+        return p;
       }
 
-      static get observers() {
-        return [
-          '_checkReady(isAuthorized, _apiLoaded)',
-          '_maybeUpdate(_startIndex, pageSize)',
-        ]
+      _getImages(items) {
+        return items;
       }
 
-      previousPage() {
-        if (this.hasPrevious) {
-          this._startIndex = Math.max(0, this._startIndex - this.pageSize);
+      _fetchItems(count, token) {
+        const request = {page_size: count};
+        if (token != null) {
+          request.token = token;
         }
-      }
-
-      nextPage() {
-        if (this.hasNext) {
-          this._startIndex += this.pageSize;
-        }
-      }
-
-      reload() {
-        console.log('reloading');
-        this._clearData();
-        this._buffer = []
-        this._startIndex = 0;
-        this._maybeUpdate();
-      }
-
-      constructor() {
-        super();
-        this._clearData();
-      }
-
-      _clearData() {
-        this._buffer = null;
-        this._token = null;
-        this._finished = false;
-      }
-
-      _onLoadApi() {
-        this._apiLoaded = true;
-      }
-
-      _checkReady(isAuthorized, apiLoaded) {
-        if (isAuthorized && apiLoaded) {
-          this._buffer = [];
-        } else {
-          this._clearData();
-        }
-        this._maybeUpdate();
-      }
-
-      _getHasPrevious(buffer, startIndex) {
-        return buffer != null && startIndex > 0;
-      }
-
-      _getHasNext(buffer, startIndex, pageSize, finished) {
-        return !finished || (startIndex + pageSize) < buffer.length;
-      }
-
-      _maybeUpdate() {
-        if (this._buffer == null) {
-          this._setImages([]);
-        } else {
-          this._setImages(
-              this._buffer.slice(
-                  this._startIndex, this._startIndex + this.pageSize));
-          if (!this._finished && this.images.length < this.pageSize) {
-            const request = {page_size: this.pageSize};
-            if (this._token != null) {
-              request.token = this._token;
-            }
-            gapi.client.images.list(request).then(
-              response => {
-                this._buffer = this._buffer.concat(response.result.images);
-                this._token = response.result.token || null;
-                this._finished = this._token == null;
-                this._maybeUpdate();
-              }
-            )
+        return gapi.client.images.list(request).then(
+          response => {
+            return {
+              items: response.result.images,
+              token: response.result.token || null,
+            };
           }
-        }
+        );
       }
     }
 

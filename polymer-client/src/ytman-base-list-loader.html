@@ -1,0 +1,133 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+
+<dom-module id="ytman-base-list-loader">
+  <template>
+    <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email"
+        is-authorized="{{isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        app-id="datastore-dot-youtube-manager-196811"
+        name="images"
+        version="v1"
+        on-google-api-load="_onLoadApi"></google-client-loader>
+  </template>
+
+  <script>
+    class YtmanBaseListLoader extends Polymer.Element {
+      static get is() { return 'ytman-base-list-loader'; }
+
+      static get properties() {
+        return {
+          pageSize: Number,
+          hasPrevious: {
+            type: Boolean,
+            computed: '_getHasPrevious(_buffer, _startIndex)',
+            notify: true,
+          },
+          hasNext: {
+            type: Boolean,
+            computed: '_getHasNext(_buffer, _startIndex, pageSize, _finished)',
+            notify: true,
+          },
+          _items: {
+            type: Array,
+            notify: true,
+            readOnly: true,
+          },
+          _apiLoaded: Boolean,
+          _buffer: Array,
+          _startIndex: {
+            type: Number,
+            value: 0,
+          },
+          _finished: Boolean,
+        };
+      }
+
+      static get observers() {
+        return [
+          '_checkReady(isAuthorized, _apiLoaded)',
+          '_maybeUpdate(_startIndex, pageSize)',
+        ]
+      }
+
+      previousPage() {
+        if (this.hasPrevious) {
+          this._startIndex = Math.max(0, this._startIndex - this.pageSize);
+        }
+      }
+
+      nextPage() {
+        if (this.hasNext) {
+          this._startIndex += this.pageSize;
+        }
+      }
+
+      reload() {
+        this._clearData();
+        this._buffer = []
+        this._startIndex = 0;
+        this._maybeUpdate();
+      }
+
+      constructor() {
+        super();
+        this._clearData();
+      }
+
+      _clearData() {
+        this._buffer = null;
+        this._token = null;
+        this._finished = false;
+      }
+
+      _onLoadApi() {
+        this._apiLoaded = true;
+      }
+
+      _checkReady(isAuthorized, apiLoaded) {
+        if (isAuthorized && apiLoaded) {
+          this._buffer = [];
+        } else {
+          this._clearData();
+        }
+        this._maybeUpdate();
+      }
+
+      _getHasPrevious(buffer, startIndex) {
+        return buffer != null && startIndex > 0;
+      }
+
+      _getHasNext(buffer, startIndex, pageSize, finished) {
+        return !finished || (startIndex + pageSize) < buffer.length;
+      }
+
+      _maybeUpdate() {
+        if (this._buffer == null) {
+          this._set_items([]);
+        } else {
+          this._set_items(
+              this._buffer.slice(
+                  this._startIndex, this._startIndex + this.pageSize));
+          if (!this._finished && this.images.length < this.pageSize) {
+            this._fetchItems(this.pageSize, this._token).then(
+              response => {
+                this._buffer = this._buffer.concat(response.items);
+                this._token = response.token;
+                this._finished = this._token == null;
+                this._maybeUpdate();
+              }
+            );
+          }
+        }
+      }
+
+      _fetchItems(count, token) {}
+    }
+
+    window.customElements.define(
+        YtmanImagesListLoader.is, YtmanImagesListLoader);
+  </script>
+</dom-module>
