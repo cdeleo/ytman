@@ -19,13 +19,13 @@
     class YtmanImagesListLoader extends YtmanBaseListLoader {
       static get is() { return 'ytman-images-list-loader'; }
       static get properties() {
-        const p = super.properties;
-        p.images = {
-          type: Array,
-          notify: true,
-          computed: '_getImages(_items)',
+        return {
+          images: {
+            type: Array,
+            notify: true,
+            computed: '_getImages(_items)',
+          },
         };
-        return p;
       }
 
       _getImages(items) {
