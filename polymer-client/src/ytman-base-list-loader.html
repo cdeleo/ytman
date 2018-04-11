@@ -1,18 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
 
 <dom-module id="ytman-base-list-loader">
-  <template>
-    <google-signin-aware
-        scopes="https://www.googleapis.com/auth/userinfo.email"
-        is-authorized="{{isAuthorized}}"></google-signin-aware>
-
-    <google-client-loader
-        app-id="datastore-dot-youtube-manager-196811"
-        name="images"
-        version="v1"
-        on-google-api-load="_onLoadApi"></google-client-loader>
-  </template>
+  <template></template>
 
   <script>
     class YtmanBaseListLoader extends Polymer.Element {
@@ -83,10 +72,6 @@
         this._finished = false;
       }
 
-      _onLoadApi() {
-        this._apiLoaded = true;
-      }
-
       _checkReady(isAuthorized, apiLoaded) {
         if (isAuthorized && apiLoaded) {
           this._buffer = [];
@@ -111,7 +96,7 @@
           this._set_items(
               this._buffer.slice(
                   this._startIndex, this._startIndex + this.pageSize));
-          if (!this._finished && this.images.length < this.pageSize) {
+          if (!this._finished && this._items.length < this.pageSize) {
             this._fetchItems(this.pageSize, this._token).then(
               response => {
                 this._buffer = this._buffer.concat(response.items);

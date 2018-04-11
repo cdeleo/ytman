@@ -32,6 +32,10 @@
         return items;
       }
 
+      _onLoadApi() {
+        this._apiLoaded = true;
+      }
+
       _fetchItems(count, token) {
         const request = {page_size: count};
         if (token != null) {

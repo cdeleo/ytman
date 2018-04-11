@@ -1,0 +1,84 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+<link rel="import" href="ytman-base-list-loader.html">
+
+<dom-module id="ytman-videos-pending-list-loader">
+  <template>
+    <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.force-ssl"
+        is-authorized="{{isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        name="youtube"
+        version="v3"
+        on-google-api-load="_onLoadApi"></google-client-loader>
+  </template>
+
+  <script>
+    class YtmanVideosPendingListLoader extends YtmanBaseListLoader {
+      static get is() { return 'ytman-videos-pending-list-loader'; }
+      static get properties() {
+        return {
+          videos: {
+            type: Array,
+            notify: true,
+            computed: '_getVideos(_items)',
+          },
+        };
+      }
+
+      _getVideos(items) {
+        return items;
+      }
+
+      _onLoadApi() {
+        this._apiLoaded = true;
+      }
+
+      _fetchItems(count, token) {
+        const searchRequest = {
+          forMine: 'true',
+          part: 'snippet',
+          type: 'video',
+          maxResults: 2 * count,
+        };
+        if (token != null) {
+          searchRequest.pageToken = token;
+        }
+        return gapi.client.youtube.search.list(searchRequest).then(
+          searchResponse => {
+            const ids = searchResponse.result.items.map(
+                item => item.id.videoId);
+            const listRequest = {
+              id: ids.join(','),
+              part: 'snippet,status',
+            };
+            return gapi.client.youtube.videos.list(listRequest).then(
+              listResponse => {
+                return {
+                  response: listResponse,
+                  token: searchResponse.result.nextPageToken,
+                };
+              }
+            );
+          }
+        ).then(
+          listData => {
+            const items = listData.response.result.items
+                .filter(item => item.status.privacyStatus == 'unlisted')
+                .map(item => {
+                  return {id: item.id, title: item.snippet.title};
+                });
+            return {
+              items: items,
+              token: listData.token || null,
+            };
+          }
+        );
+      }
+    }
+
+    window.customElements.define(
+        YtmanVideosPendingListLoader.is, YtmanVideosPendingListLoader);
+  </script>
+</dom-module>
