@@ -1,18 +1,9 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="ytman-videos-pending-list-loader.html">
+<link rel="import" href="ytman-videos-list.html">
 
 <dom-module id="ytman-videos">
   <template>
-    <ytman-videos-pending-list-loader
-        id="pendingVideosList"
-        page-size=10
-        videos={{pendingVideos}}
-        has-previous={{hasPendingPrevious}}
-        has-next={{hasPendingNext}}></ytman-videos-pending-list-loader>
-
-    <template is="dom-repeat" items="[[pendingVideos]]">
-      [[item.title]]<br/>
-    </template>
+    <ytman-videos-list></ytman-videos-list>
   </template>
 
   <script>

@@ -7,11 +7,12 @@
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="ytman-images.html">
+<link rel="import" href="ytman-style.html">
 <link rel="import" href="ytman-videos.html">
 
 <dom-module id="ytman-app">
   <template>
-    <style>
+    <style include="ytman-style">
       :host {
         display: block;
         font-family: 'Roboto', 'Noto', sans-serif;
@@ -65,12 +66,17 @@
           <paper-tab key="images">Images</paper-tab>
           </paper-tabs>
       </app-header>
-      <iron-pages attr-for-selected="key" selected="{{routeData.section}}">
-        <div key="videos"><ytman-videos></ytman-videos></div>
-        <div key="images">
-          <ytman-images route="{{subroute}}"></ytman-images>
-        </div>
-      </iron-pages>
+      <div>
+        <iron-pages
+            class="main-pane"
+            attr-for-selected="key"
+            selected="{{routeData.section}}">
+          <div key="videos"><ytman-videos></ytman-videos></div>
+          <div key="images">
+            <ytman-images route="{{subroute}}"></ytman-images>
+          </div>
+        </iron-pages>
+      </div>
     </app-header-layout>
   </template>
 

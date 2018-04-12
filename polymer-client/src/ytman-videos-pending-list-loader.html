@@ -51,7 +51,7 @@
                 item => item.id.videoId);
             const listRequest = {
               id: ids.join(','),
-              part: 'snippet,status',
+              part: 'snippet,contentDetails,status',
             };
             return gapi.client.youtube.videos.list(listRequest).then(
               listResponse => {
@@ -67,7 +67,13 @@
             const items = listData.response.result.items
                 .filter(item => item.status.privacyStatus == 'unlisted')
                 .map(item => {
-                  return {id: item.id, title: item.snippet.title};
+                  return {
+                    id: item.id,
+                    title: item.snippet.title,
+                    date: item.snippet.publishedAt,
+                    thumbnail: item.snippet.thumbnails.default.url,
+                    duration: item.contentDetails.duration,
+                  };
                 });
             return {
               items: items,

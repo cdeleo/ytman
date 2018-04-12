@@ -4,24 +4,12 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="ytman-images-card.html">
 <link rel="import" href="ytman-images-list-loader.html">
+<link rel="import" href="ytman-style.html">
 
 <dom-module id="ytman-images-picker">
   <template>
     <style include="iron-flex iron-flex-alignment"></style>
-    <style>
-      .main {
-        max-width: 1100px;
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 30px;
-      }
-
-      paper-input {
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-    </style>
+    <style include="ytman-style"></style>
 
     <google-signin-aware
         scopes="https://www.googleapis.com/auth/userinfo.email"
@@ -39,20 +27,20 @@
         has-previous={{hasPrevious}}
         has-next={{hasNext}}></ytman-images-list-loader>
 
-    <paper-input value={{_search}}>
+    <paper-input class="input-pane" value={{_search}}>
       <iron-icon icon="search" slot="prefix"></iron-icon>
     </paper-input>
 
     <iron-pages attr-for-selected="key" selected="[[_mode]]">
       <div key="list">
-        <div class="main layout horizontal wrap center-justified">
+        <div class="layout horizontal wrap center-justified">
           <template is="dom-repeat" items="[[images]]">
             <ytman-images-card
                 item=[[item]] on-deleted="reload"></ytman-images-card>
           </template>
         </div>
 
-        <div class="main layout horizontal center-justified">
+        <div class="nav layout horizontal center-justified">
           <paper-button
               disabled=[[!hasPrevious]]
               on-click="_goPrevious">Previous</paper-button>
@@ -61,7 +49,7 @@
         </div>
       </div>
       <div key="search">
-        <div class="main layout horizontal wrap center-justified">
+        <div class="layout horizontal wrap center-justified">
           <template is="dom-repeat" items="[[searchImages]]">
             <ytman-images-card
                 item=[[item]] on-deleted="_reloadSearch"></ytman-images-card>

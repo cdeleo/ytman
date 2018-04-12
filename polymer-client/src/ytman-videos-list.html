@@ -1,0 +1,91 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="ytman-style.html">
+<link rel="import" href="ytman-videos-pending-list-loader.html">
+
+<dom-module id="ytman-videos-list">
+  <template>
+    <style include="iron-flex iron-flex-alignment"></style>
+    <style include="ytman-style">
+      .thumbnail {
+        width: 90%;
+        vertical-align: middle;
+      }
+    </style>
+
+    <ytman-videos-pending-list-loader
+        id="pendingVideosList"
+        page-size=8
+        videos={{pendingVideos}}
+        has-previous={{hasPendingPrevious}}
+        has-next={{hasPendingNext}}></ytman-videos-pending-list-loader>
+    <div class="input-pane">
+      <paper-listbox>
+        <template is="dom-repeat" items="[[pendingVideos]]">
+          <paper-icon-item>
+              <img class="thumbnail" slot="item-icon" src="[[item.thumbnail]]">
+              </img>
+            <paper-item-body two-line>
+              <div>[[item.title]]</div>
+              <div secondary>
+                [[_formatDuration(item.duration)]] -
+                Uploaded [[_formatDay(item.date)]]
+                at [[_formatTime(item.date)]]
+              </div>
+            </paper-item-body>
+          </paper-icon-item>
+        </template>
+      </paper-listbox>
+      <div class="nav layout horizontal center-justified">
+        <paper-button
+            disabled=[[!hasPendingPrevious]]
+            on-click="_goPrevious">Previous</paper-button>
+        <paper-button
+            disabled=[[!hasPendingNext]] on-click="_goNext">Next</paper-button>
+      </div>
+    </div>
+  </template>
+
+  <script src="../bower_components/moment/moment.js"></script>
+  <script>
+    class YtmanVideosList extends Polymer.Element {
+      static get is() { return 'ytman-videos-list'; }
+      static get properties() {
+        return {};
+      }
+
+      _formatDuration(duration) {
+        const zeroPad = (v) => v < 10 ? '0' + v : v;
+        const d = moment.duration(duration);
+        const parts = [];
+        if (d.hours() > 0) {
+          parts.push(d.hours());
+        }
+        parts.push(zeroPad(d.minutes()));
+        parts.push(zeroPad(d.seconds()));
+        return parts.join(':');
+      }
+
+      _formatDay(date) {
+        return moment(date).format('dddd, MMMM D, YYYY');
+      }
+
+      _formatTime(date) {
+        return moment(date).format('h:mm a');
+      }
+
+      _goPrevious() {
+        this.$.pendingVideosList.previousPage();
+      }
+
+      _goNext() {
+        this.$.pendingVideosList.nextPage();
+      }
+    }
+
+    window.customElements.define(YtmanVideosList.is, YtmanVideosList);
+  </script>
+</dom-module>

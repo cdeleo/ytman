@@ -5,32 +5,28 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="ytman-images-cropper.html">
+<link rel="import" href="ytman-style.html">
 
 <dom-module id="ytman-images-add">
   <template>
-    <style>
-      #container {
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-      }
+    <style include="ytman-style">
       #fileInput {
         display: none;
       }
     </style>
 
     <paper-icon-button icon="arrow-back" on-click="_goBack"></paper-icon-button>
-    <div id="container">
+    <div>
+      <ytman-images-cropper
+          id="cropper" image="{{image}}"></ytman-images-cropper>
+    </div>
+    <div class="input-pane">
       <iron-form id="addForm">
         <form>
           <input type="file"
               id="fileInput"
               accept="image/*"
               on-change="_onImageChange" />
-          <div>
-            <ytman-images-cropper
-                id="cropper" image="{{image}}"></ytman-images-cropper>
-          </div>
           <paper-button raised on-click="_onSelectClick">Select</paper-button>
           <paper-button raised on-click="_onResetClick">Reset</paper-button>
           <paper-input
