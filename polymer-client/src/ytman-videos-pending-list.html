@@ -6,10 +6,14 @@
 <link rel="import" href="ytman-style.html">
 <link rel="import" href="ytman-videos-pending-list-loader.html">
 
-<dom-module id="ytman-videos-list">
+<dom-module id="ytman-videos-pending-list">
   <template>
     <style include="iron-flex iron-flex-alignment"></style>
     <style include="ytman-style">
+      paper-icon-item {
+        cursor: pointer;
+      }
+
       .thumbnail {
         width: 90%;
         vertical-align: middle;
@@ -17,15 +21,15 @@
     </style>
 
     <ytman-videos-pending-list-loader
-        id="pendingVideosList"
+        id="videosList"
         page-size=8
-        videos={{pendingVideos}}
-        has-previous={{hasPendingPrevious}}
-        has-next={{hasPendingNext}}></ytman-videos-pending-list-loader>
+        videos={{videos}}
+        has-previous={{hasPrevious}}
+        has-next={{hasNext}}></ytman-videos-pending-list-loader>
     <div class="input-pane">
       <paper-listbox>
-        <template is="dom-repeat" items="[[pendingVideos]]">
-          <paper-icon-item>
+        <template is="dom-repeat" items="[[videos]]">
+          <paper-icon-item on-click="_onVideoClick">
               <img class="thumbnail" slot="item-icon" src="[[item.thumbnail]]">
               </img>
             <paper-item-body two-line>
@@ -41,20 +45,30 @@
       </paper-listbox>
       <div class="nav layout horizontal center-justified">
         <paper-button
-            disabled=[[!hasPendingPrevious]]
+            disabled=[[!hasPrevious]]
             on-click="_goPrevious">Previous</paper-button>
         <paper-button
-            disabled=[[!hasPendingNext]] on-click="_goNext">Next</paper-button>
+            disabled=[[!hasNext]] on-click="_goNext">Next</paper-button>
       </div>
     </div>
   </template>
 
   <script src="../bower_components/moment/moment.js"></script>
   <script>
-    class YtmanVideosList extends Polymer.Element {
-      static get is() { return 'ytman-videos-list'; }
+    class YtmanVideosPendingList extends Polymer.Element {
+      static get is() { return 'ytman-videos-pending-list'; }
       static get properties() {
-        return {};
+        return {
+          selectedVideo: {
+            type: Object,
+            notify: true,
+          },
+        };
+      }
+
+      _onVideoClick(e) {
+        this.selectedVideo = e.model.item;
+        this.dispatchEvent(new CustomEvent('video-clicked'));
       }
 
       _formatDuration(duration) {
@@ -78,14 +92,15 @@
       }
 
       _goPrevious() {
-        this.$.pendingVideosList.previousPage();
+        this.$.videosList.previousPage();
       }
 
       _goNext() {
-        this.$.pendingVideosList.nextPage();
+        this.$.videosList.nextPage();
       }
     }
 
-    window.customElements.define(YtmanVideosList.is, YtmanVideosList);
+    window.customElements.define(
+        YtmanVideosPendingList.is, YtmanVideosPendingList);
   </script>
 </dom-module>

@@ -19,7 +19,9 @@
     "iron-form": "PolymerElements/iron-form#^2.3.0",
     "paper-item": "PolymerElements/paper-item#^2.1.0",
     "paper-listbox": "PolymerElements/paper-listbox#^2.1.0",
-    "moment": "^2.22.0"
+    "moment": "^2.22.0",
+    "paper-dialog": "PolymerElements/paper-dialog#^2.1.1",
+    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^2.2.0"
   },
   "devDependencies": {
     "web-component-tester": "Polymer/web-component-tester#^6.0.0",

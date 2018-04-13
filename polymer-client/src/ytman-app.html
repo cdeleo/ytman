@@ -71,7 +71,9 @@
             class="main-pane"
             attr-for-selected="key"
             selected="{{routeData.section}}">
-          <div key="videos"><ytman-videos></ytman-videos></div>
+          <div key="videos">
+            <ytman-videos route="{{subroute}}"></ytman-videos>
+          </div>
           <div key="images">
             <ytman-images route="{{subroute}}"></ytman-images>
           </div>

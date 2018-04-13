@@ -1,16 +1,62 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="ytman-videos-list.html">
+<link rel="import" href="ytman-videos-pending-list.html">
+<link rel="import" href="ytman-videos-publish.html">
 
 <dom-module id="ytman-videos">
   <template>
-    <ytman-videos-list></ytman-videos-list>
+    <app-route
+        route="{{route}}"
+        pattern="/:action"
+        active="{{routeActive}}"
+        data="{{routeData}}"></app-route>
+
+    <iron-pages attr-for-selected="key" selected="{{page}}">
+      <div key="main">
+        <ytman-videos-pending-list
+            selected-video={{_selectedPendingVideo}}
+            on-video-clicked="_onPendingVideoClicked">
+        </ytman-videos-pending-list>
+      </div>
+      <div key="publish">
+        <ytman-videos-publish
+            id="videosPublish"
+            video="[[_selectedPendingVideo]]"
+            on-back-clicked="_goList"></ytman-videos-publish>
+      </div>
+    </iron-pages>
   </template>
 
   <script>
     class YtmanVideos extends Polymer.Element {
       static get is() { return 'ytman-videos'; }
       static get properties() {
-        return {};
+        return {
+          route: {
+            type: Object,
+            notify: true,
+          },
+          page: {
+            type: String,
+            computed: '_getPage(routeActive, routeData)',
+          },
+        };
+      }
+
+      _onPendingVideoClicked() {
+        this.$.videosPublish.initialize();
+        this.set('route.path', '/publish/' + this._selectedPendingVideo.id);
+      }
+
+      _getPage(routeActive, routeData) {
+        if (routeActive) {
+          return routeData.action;
+        } else {
+          return 'main';
+        }
+      }
+
+      _goList() {
+        this.set('route.path', '');
       }
     }
 

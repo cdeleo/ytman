@@ -1,0 +1,71 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="ytman-images-picker.html">
+<link rel="import" href="ytman-style.html">
+<link rel="import" href="ytman-videos-pending-list.html">
+
+<dom-module id="ytman-videos-publish">
+  <template>
+    <style include="ytman-style"></style>
+
+    <paper-icon-button icon="arrow-back" on-click="_goBack"></paper-icon-button>
+    <div class="input-pane">
+      <paper-input
+          id="titleInput"
+          label="title"
+          required
+          auto-validate
+          error-message="required"
+          value="{{title}}"></paper-input>
+      <paper-input
+          id="subtitleInput"
+          label="subtitle"
+          required
+          auto-validate
+          error-message="required"
+          value="{{subtitle}}"></paper-input>
+      <paper-button on-click="_selectImage">
+        Select Image
+      </paper-button>
+    </div>
+
+    <paper-dialog id="imageSelectDialog">
+      <h2>Select image</h2>
+      <paper-dialog-scrollable>
+        <ytman-images-picker></ytman-images-picker>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+
+  <script>
+    class YtmanVideosPublish extends Polymer.Element {
+      static get is() { return 'ytman-videos-publish'; }
+      static get properties() {
+        return {
+          video: Object,
+        };
+      }
+
+      initialize() {
+        this.title = this.video.title;
+      }
+
+      _goBack() {
+        this.dispatchEvent(new CustomEvent('back-clicked'));
+      }
+
+      _selectImage() {
+        this.$.imageSelectDialog.open();
+      }
+    }
+
+    window.customElements.define(YtmanVideosPublish.is, YtmanVideosPublish);
+  </script>
+</dom-module>
