@@ -1,0 +1,42 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="mtg-io">
+  <template>
+    <iron-ajax id="ajax" handle-as="json"></iron-ajax>
+  </template>
+
+  <script>
+    class MtgIo extends Polymer.Element {
+      static get is() { return 'mtg-io'; }
+      static get properties() {
+        return {};
+      }
+
+      constructor() {
+        super();
+        this._baseUrl = 'https://api.magicthegathering.io/v1/';
+      }
+
+      getCard(mid) {
+        this.$.ajax.url = this._baseUrl + 'cards/' + mid;
+        return this.$.ajax.generateRequest().completes.then(
+          cardResponse => {
+            this.$.ajax.url = (
+                this._baseUrl + 'sets/' + cardResponse.response.card.set);
+            return this.$.ajax.generateRequest().completes.then(
+              setResponse => {
+                return {
+                  card: cardResponse.response.card,
+                  set: setResponse.response.set,
+                };
+              }
+            );
+          }
+        );
+      }
+    }
+
+    window.customElements.define(MtgIo.is, MtgIo);
+  </script>
+</dom-module>

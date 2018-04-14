@@ -6,6 +6,7 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="mtg-io.html">
 <link rel="import" href="ytman-images-picker.html">
 <link rel="import" href="ytman-style.html">
 <link rel="import" href="ytman-videos-pending-list.html">
@@ -29,6 +30,8 @@
         display: none;
       }
     </style>
+
+    <mtg-io id="mtgIo"></mtg-io>
 
     <div class="input-pane">
       <paper-icon-button
@@ -126,9 +129,25 @@
       }
 
       _onSelected(e) {
-        console.log('_onSelected ', e.detail);
         this.$.imageSelectDialog.close();
         this._image = e.detail.url;
+        const midPair = e.detail.metadata.find(kv => kv.key == 'mid');
+        if (midPair) {
+          this.$.mtgIo.getCard(midPair.value).then(
+              data => this.description = this._generateDescription(data));
+        }
+      }
+
+      _generateDescription(data) {
+        const name = data.card.name;
+        const artist = data.card.artist;
+        const year = data.set.releaseDate.substring(0, 4);
+        const company = (
+            'Wizards of the Coast LLC, a subsidiary of Hasbro, Inc.');
+        return (
+          `Thumbnail from ${name} by ${artist}\n` +
+          `\u00A9 ${year} ${company}`
+        );
       }
 
       _getIsPublishEnabled(title, subtitle, image) {
