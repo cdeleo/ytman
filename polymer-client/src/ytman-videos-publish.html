@@ -1,42 +1,84 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="ytman-images-picker.html">
 <link rel="import" href="ytman-style.html">
 <link rel="import" href="ytman-videos-pending-list.html">
 
 <dom-module id="ytman-videos-publish">
   <template>
-    <style include="ytman-style"></style>
+    <style include="iron-flex iron-flex-alignment"></style>
+    <style include="ytman-style">
+      .half-pane {
+        flex: 1;
+        border: 2px;
+        margin: 10px;
+      }
 
-    <paper-icon-button icon="arrow-back" on-click="_goBack"></paper-icon-button>
+      img {
+        width: 100%;
+        cursor: pointer;
+      }
+
+      [hidden] {
+        display: none;
+      }
+    </style>
+
     <div class="input-pane">
-      <paper-input
-          id="titleInput"
-          label="title"
-          required
-          auto-validate
-          error-message="required"
-          value="{{title}}"></paper-input>
-      <paper-input
-          id="subtitleInput"
-          label="subtitle"
-          required
-          auto-validate
-          error-message="required"
-          value="{{subtitle}}"></paper-input>
-      <paper-button on-click="_selectImage">
-        Select Image
-      </paper-button>
+      <paper-icon-button
+          icon="arrow-back" on-click="_goBack"></paper-icon-button>
+      <iron-form id="publishForm">
+        <form>
+          <div class="layout horizontal">
+            <div class="half-pane">
+              <paper-input
+                  id="titleInput"
+                  label="title"
+                  required
+                  auto-validate
+                  error-message="required"
+                  value="{{title}}"></paper-input>
+              <paper-input
+                  id="subtitleInput"
+                  label="subtitle"
+                  required
+                  auto-validate
+                  error-message="required"
+                  value="{{subtitle}}"></paper-input>
+              <paper-textarea
+                  id="descriptionInput"
+                  label="description"
+                  rows=3
+                  value="{{description}}"></paper-textarea>
+            </div>
+            <div class="half-pane">
+              <paper-button
+                  on-click="_selectImage" hidden$="[[_imageSelected]]">
+                Select Image
+              </paper-button>
+              <img src="[[_image]]"
+                  on-click="_selectImage" hidden$="[[!_imageSelected]]"></img>
+            </div>
+          </div>
+          <paper-button
+              raised
+              disabled=[[!_isPublishEnabled]]
+              on-click="_onPublishClick">Publish</paper-button>
+        </form>
+      </iron-form>
     </div>
 
     <paper-dialog id="imageSelectDialog">
       <h2>Select image</h2>
       <paper-dialog-scrollable>
-        <ytman-images-picker></ytman-images-picker>
+        <ytman-images-picker
+            allow-select on-selected="_onSelected"></ytman-images-picker>
       </paper-dialog-scrollable>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
@@ -50,6 +92,17 @@
       static get properties() {
         return {
           video: Object,
+          _image: Object,
+          _imageSelected: {
+            type: Boolean,
+            value: false,
+            computed: '_getImageSelected(_image)',
+          },
+          _isPublishEnabled: {
+            type: Boolean,
+            value: false,
+            computed: '_getIsPublishEnabled(title, subtitle, _image)',
+          },
         };
       }
 
@@ -58,11 +111,32 @@
       }
 
       _goBack() {
+        this.$.publishForm.reset();
+        this._image = null;
         this.dispatchEvent(new CustomEvent('back-clicked'));
       }
 
       _selectImage() {
+        document.body.appendChild(this.$.imageSelectDialog);
         this.$.imageSelectDialog.open();
+      }
+
+      _getImageSelected(image) {
+        return image;
+      }
+
+      _onSelected(e) {
+        console.log('_onSelected ', e.detail);
+        this.$.imageSelectDialog.close();
+        this._image = e.detail.url;
+      }
+
+      _getIsPublishEnabled(title, subtitle, image) {
+        return title && subtitle && image;
+      }
+
+      _onPublishClick() {
+
       }
     }
 

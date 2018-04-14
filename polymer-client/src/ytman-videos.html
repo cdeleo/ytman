@@ -44,11 +44,14 @@
 
       _onPendingVideoClicked() {
         this.$.videosPublish.initialize();
-        this.set('route.path', '/publish/' + this._selectedPendingVideo.id);
+        this.set('route.path', '/publish');
       }
 
       _getPage(routeActive, routeData) {
         if (routeActive) {
+          if (routeData.action == 'publish' && !this._selectedPendingVideo) {
+            this._goList();
+          }
           return routeData.action;
         } else {
           return 'main';

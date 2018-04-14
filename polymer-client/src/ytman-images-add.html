@@ -15,12 +15,13 @@
       }
     </style>
 
-    <paper-icon-button icon="arrow-back" on-click="_goBack"></paper-icon-button>
-    <div>
-      <ytman-images-cropper
-          id="cropper" image="{{image}}"></ytman-images-cropper>
-    </div>
     <div class="input-pane">
+      <paper-icon-button
+          icon="arrow-back" on-click="_goBack"></paper-icon-button>
+      <div>
+        <ytman-images-cropper
+            id="cropper" image="{{image}}"></ytman-images-cropper>
+      </div>
       <iron-form id="addForm">
         <form>
           <input type="file"

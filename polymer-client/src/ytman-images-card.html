@@ -20,12 +20,24 @@
         padding-right: 2px;
       }
 
+      .title {
+        font-size: 16px;
+      }
+
       .delete {
         color: lightgray;
       }
 
       .delete:hover {
         color: black;
+      }
+
+      [invisible] {
+        visibility: hidden;
+      }
+
+      [selectable] {
+        cursor: pointer;
       }
     </style>
 
@@ -41,14 +53,17 @@
     <paper-card
         image="[[item.url]]"
         placeholder-image=[[placeholderImage]]
-        preload-image=true>
+        preload-image=true
+        selectable$="[[allowSelect]]"
+        on-click="_onSelect">
       <div class="card-content layout horizontal center">
-        <span>[[item.name]]</span>
+        <span class="title">[[item.name]]</span>
         <span class="flex"></span>
         <paper-icon-button
             class="delete"
             icon="delete"
-            on-click="_onDelete"></paper-icon-button>
+            on-click="_onDelete"
+            invisible$="[[!allowDelete]]"></paper-icon-button>
       </div>
     </paper-card>
   </template>
@@ -59,6 +74,14 @@
       static get properties() {
         return {
           item: Object,
+          allowSelect: {
+            type: Boolean,
+            value: false,
+          },
+          allowDelete: {
+            type: Boolean,
+            value: false,
+          },
           placeholderImage: {
             type: String,
             value: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAACNCAIAAAARqfATAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gQIBQwBehUjdwAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAABI0lEQVR42u3SAQ0AAAjDMMC/uxvCBgmthGWdpOCHkQC7g93B7mB3sDvYHewOdge7g93B7tgd7A52B7uD3cHuYHewO9gd7A52x+5gd7A72B3sDnYHu4Pdwe5gd7A7dge7g93B7mB3sDvYHewOdge7g92xO9gd7A52B7uD3cHuYHewO9gd7A52x+5gd7A72B3sDnYHu4Pdwe5gd7A7dge7g93B7mB3sDvYHewOdge7g92xO9gd7A52B7uD3cHuYHewO9gd7I7dwe5gd7A72B3sDnYHu4Pdwe5gd+wOdge7g93B7mB3sDvYHewOdge7g92xO9gd7A52B7uD3cHuYHewO9gd7I7dwe5gd7A72B3sDnYHu4Pdwe5gd+wOdge7g93B7nDCAnzfA5PrdUIOAAAAAElFTkSuQmCC",
@@ -66,13 +89,21 @@
         };
       }
 
+      _onSelect() {
+        if (this.allowSelect) {
+          this.dispatchEvent(new CustomEvent('selected'));
+        }
+      }
+
       _onDelete() {
-        const req = {
-            'key': this.item.key,
-        };
-        gapi.client.images.delete(req).execute(resp => {
-          this.dispatchEvent(new CustomEvent('deleted'));
-        });
+        if (this.allowDelete) {
+          const req = {
+              'key': this.item.key,
+          };
+          gapi.client.images.delete(req).execute(resp => {
+            this.dispatchEvent(new CustomEvent('deleted'));
+          });
+        }
       }
     }
 
