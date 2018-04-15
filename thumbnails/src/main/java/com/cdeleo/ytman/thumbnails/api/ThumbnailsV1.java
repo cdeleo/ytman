@@ -1,13 +1,22 @@
 package com.cdeleo.ytman.thumbnails.api;
 
 import com.cdeleo.ytman.thumbnails.ThumbnailGenerator;
+import com.google.appengine.api.appidentity.AppIdentityServiceFactory;
+import com.google.appengine.api.images.Image;
+import com.google.appengine.api.images.ImagesService;
+import com.google.appengine.api.images.ImagesServiceFactory;
+import com.google.api.server.spi.auth.common.User;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
 import com.google.api.server.spi.config.Named;
+import com.google.api.server.spi.response.UnauthorizedException;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 import java.awt.Color;
@@ -26,16 +35,31 @@ import java.awt.Rectangle;
 public class ThumbnailsV1 {
 
   private final ThumbnailGenerator generator;
+  private final ImagesService imagesService;
+  private final String defaultBucket;
+
+  private final Logger logger = Logger.getLogger(ThumbnailsV1.class.getName());
 
   public ThumbnailsV1() {
     generator = new ThumbnailGenerator();
+    imagesService = ImagesServiceFactory.getImagesService();
+    defaultBucket = AppIdentityServiceFactory
+        .getAppIdentityService().getDefaultGcsBucketName();
   }
 
   @ApiMethod(name = "get", path = "get")
   public GetResponse get(
-      @Named("title") String title, @Named("subtitle") String subtitle)
-      throws Exception {
+      User user,
+      @Named("bgKey") String bgKey,
+      @Named("title") String title,
+      @Named("subtitle") String subtitle) throws Exception {
     // Validation
+    // if (user == null) {
+    //   throw new UnauthorizedException("Authorization required.");
+    // }
+    if (bgKey == null) {
+      throw new IllegalArgumentException("bgKey is required.");
+    }
     if (title == null) {
       throw new IllegalArgumentException("title is required.");
     }
@@ -45,7 +69,7 @@ public class ThumbnailsV1 {
 
     // Thumbnail generation
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    writeThumbnail(title, subtitle, out);
+    writeThumbnail(user, bgKey, title, subtitle, out);
 
     // Response generation
     GetResponse response = new GetResponse();
@@ -53,14 +77,20 @@ public class ThumbnailsV1 {
     return response;
   }
 
-  private void writeThumbnail(String title, String subtitle, OutputStream out)
-      throws Exception {
-    BufferedImage bgImage = new BufferedImage(
-        1280, 720, BufferedImage.TYPE_3BYTE_BGR);
-    Graphics2D c = bgImage.createGraphics();
-    c.setPaint(Color.CYAN);
-    c.fill(new Rectangle(0, 0, bgImage.getWidth(), bgImage.getHeight()));
+  private Image readBgImage(String userId, String key) {
+    String path = String.format(
+        "/gs/%s/images/%s/%s.png", defaultBucket, userId, key);
+    return imagesService.applyTransform(
+         ImagesServiceFactory.makeResize(1280, 720),
+         ImagesServiceFactory.makeImageFromFilename(path));
+  }
 
+  private void writeThumbnail(
+      User user, String bgKey, String title, String subtitle, OutputStream out)
+      throws Exception {
+    BufferedImage bgImage = ImageIO.read(
+        new ByteArrayInputStream(
+            readBgImage("104593307660045559414", bgKey).getImageData()));
     BufferedImage image = generator.generate(bgImage, title, subtitle);
     ImageIO.write(image, "png", out);
   }
