@@ -26,6 +26,7 @@ import java.awt.Rectangle;
 @Api(
     name = "thumbnails",
     version = "v1",
+    clientIds = {ThumbnailsV1.CONSOLE_CLIENT_ID, ThumbnailsV1.WEB_CLIENT_ID},
     namespace = @ApiNamespace(
         ownerDomain = "com.cdeleo",
         ownerName = "com.cdeleo",
@@ -33,6 +34,11 @@ import java.awt.Rectangle;
     )
 )
 public class ThumbnailsV1 {
+
+  static final String CONSOLE_CLIENT_ID =
+      "955262123852-j4nv7slhidt5lcjve721nj9lo8otmfq5.apps.googleusercontent.com";
+  static final String WEB_CLIENT_ID =
+      "955262123852-c1gthms5mhs36q6njvg6kgqu4f1b09q7.apps.googleusercontent.com";
 
   private final ThumbnailGenerator generator;
   private final ImagesService imagesService;
@@ -54,9 +60,9 @@ public class ThumbnailsV1 {
       @Named("title") String title,
       @Named("subtitle") String subtitle) throws Exception {
     // Validation
-    // if (user == null) {
-    //   throw new UnauthorizedException("Authorization required.");
-    // }
+    if (user == null) {
+      throw new UnauthorizedException("Authorization required.");
+    }
     if (bgKey == null) {
       throw new IllegalArgumentException("bgKey is required.");
     }
@@ -90,7 +96,7 @@ public class ThumbnailsV1 {
       throws Exception {
     BufferedImage bgImage = ImageIO.read(
         new ByteArrayInputStream(
-            readBgImage("104593307660045559414", bgKey).getImageData()));
+            readBgImage(user.userId(), bgKey).getImageData()));
     BufferedImage image = generator.generate(bgImage, title, subtitle);
     ImageIO.write(image, "png", out);
   }
