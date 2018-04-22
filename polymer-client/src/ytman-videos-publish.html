@@ -13,6 +13,7 @@
 
 <dom-module id="ytman-videos-publish">
   <template>
+    <script src="../bower_components/base64-js/base64js.min.js"></script>
     <style include="iron-flex iron-flex-alignment"></style>
     <style include="ytman-style">
       .half-pane {
@@ -32,6 +33,19 @@
     </style>
 
     <mtg-io id="mtgIo"></mtg-io>
+
+    <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.force-ssl"
+        is-authorized="{{isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        app-id="thumbnails-dot-youtube-manager-196811"
+        name="thumbnails"
+        version="v1"></google-client-loader>
+
+    <google-client-loader
+        name="youtube"
+        version="v3"></google-client-loader>
 
     <div class="input-pane">
       <paper-icon-button
@@ -130,6 +144,7 @@
 
       _onSelected(e) {
         this.$.imageSelectDialog.close();
+        this._bgKey = e.detail.key;
         this._image = e.detail.url;
         const midPair = e.detail.metadata.find(kv => kv.key == 'mid');
         if (midPair) {
@@ -154,8 +169,45 @@
         return title && subtitle && image;
       }
 
-      _onPublishClick() {
+      _convertToBinaryString(u8Array) {
+        var i, len = u8Array.length, b_str = "";
+      	for (i=0; i<len; i++) {
+      		b_str += String.fromCharCode(u8Array[i]);
+      	}
+      	return b_str;
+      }
 
+      _onPublishClick() {
+        const thumbnailRequest = {
+          bgKey: this._bgKey,
+          title: this.title,
+          subtitle: this.subtitle,
+        };
+        gapi.client.thumbnails.get(thumbnailRequest).then(
+          response => {
+            let paddingSize = 4 - (response.result.imageData.length % 4);
+            if (paddingSize == 4) {
+              paddingSize = 0;
+            }
+            const data = base64js.toByteArray(
+                response.result.imageData + '='.repeat(paddingSize));
+            const setThumbnailRequest = {
+              videoId: this.video.id,
+              resource: data,
+            };
+            return gapi.client.youtube.thumbnails.set(setThumbnailRequest);
+            // const dataStr = this._convertToBinaryString(data);
+            // console.log('size ', dataStr.length);
+            // const args = {
+            //   path: 'https://www.googleapis.com/upload/youtube/v3/thumbnails/set',
+            //   method: 'POST',
+            //   params: {videoId: this.video.id},
+            //   headers: {'Content-Type': 'image/png', 'Content-Length': dataStr.length},
+            //   body: dataStr,
+            // };
+            // return gapi.client.request(args);
+          }
+        );
       }
     }
 
