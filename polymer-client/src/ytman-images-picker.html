@@ -13,8 +13,8 @@
     <style include="ytman-style"></style>
 
     <google-client-loader
-        app-id="datastore-dot-youtube-manager-196811"
-        name="images"
+        app-id="youtube-manager-196811"
+        name="ytman"
         version="v1"></google-client-loader>
 
     <ytman-images-list-loader
@@ -133,7 +133,7 @@
         };
         const searchReq = this._nextSearchReq;
         this._nextSearchReq += 1;
-        gapi.client.images.search(req).execute(resp => {
+        gapi.client.ytman.images.search(req).execute(resp => {
           if (searchReq > this._lastSearchResp) {
             this.searchImages = resp.images;
             this._lastSearchResp = searchReq;

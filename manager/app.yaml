@@ -1,7 +1,6 @@
 runtime: python27
 threadsafe: true
 api_version: 1
-service: datastore
 
 builtins:
 - remote_api: on
@@ -17,5 +16,5 @@ libraries:
   version: 2.7.11
 
 env_variables:
-  ENDPOINTS_SERVICE_NAME: datastore-dot-youtube-manager-196811.appspot.com
-  ENDPOINTS_SERVICE_VERSION: 2018-04-01r0
+  ENDPOINTS_SERVICE_NAME: youtube-manager-196811.appspot.com
+  ENDPOINTS_SERVICE_VERSION: 2018-04-25r1

@@ -43,8 +43,8 @@
     </style>
 
     <google-client-loader
-        app-id="datastore-dot-youtube-manager-196811"
-        name="images"
+        app-id="youtube-manager-196811"
+        name="ytman"
         version="v1"></google-client-loader>
 
     <paper-card
@@ -97,7 +97,7 @@
           const req = {
               'key': this.item.key,
           };
-          gapi.client.images.delete(req).execute(resp => {
+          gapi.client.ytman.images.delete(req).execute(resp => {
             this.dispatchEvent(new CustomEvent('deleted'));
           });
         }

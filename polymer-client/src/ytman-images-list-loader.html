@@ -9,8 +9,8 @@
         is-authorized="{{_isAuthorized}}"></google-signin-aware>
 
     <google-client-loader
-        app-id="datastore-dot-youtube-manager-196811"
-        name="images"
+        app-id="youtube-manager-196811"
+        name="ytman"
         version="v1"
         on-google-api-load="_onLoadApi"></google-client-loader>
   </template>
@@ -41,7 +41,7 @@
         if (token != null) {
           request.token = token;
         }
-        return gapi.client.images.list(request).then(
+        return gapi.client.ytman.images.list(request).then(
           response => {
             return {
               items: response.result.images,

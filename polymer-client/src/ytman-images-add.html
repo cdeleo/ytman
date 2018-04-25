@@ -17,8 +17,8 @@
     </style>
 
     <google-client-loader
-        app-id="datastore-dot-youtube-manager-196811"
-        name="images"
+        app-id="youtube-manager-196811"
+        name="ytman"
         version="v1"></google-client-loader>
 
     <div class="input-pane">
@@ -110,7 +110,7 @@
             {'key': 'mid', 'value': parseInt(this.mid).toString()},
           ];
         }
-        gapi.client.images.create(req).execute(resp => {
+        gapi.client.ytman.images.create(req).execute(resp => {
           this.$.addForm.reset();
           this.dispatchEvent(new CustomEvent('upload-done'));
         });
