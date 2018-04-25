@@ -6,7 +6,7 @@
   <template>
     <google-signin-aware
         scopes="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.force-ssl"
-        is-authorized="{{isAuthorized}}"></google-signin-aware>
+        is-authorized="{{_isAuthorized}}"></google-signin-aware>
 
     <google-client-loader
         name="youtube"

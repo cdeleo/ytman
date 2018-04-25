@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
@@ -40,10 +41,6 @@
         cursor: pointer;
       }
     </style>
-
-    <google-signin-aware
-        scopes="https://www.googleapis.com/auth/userinfo.email"
-        is-authorized="{{isAuthorized}}"></google-signin-aware>
 
     <google-client-loader
         app-id="datastore-dot-youtube-manager-196811"
