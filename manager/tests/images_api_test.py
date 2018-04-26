@@ -9,12 +9,13 @@ from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 import images
+import models
 
 class ImagesApiTest(unittest.TestCase):
 
   API_PREFIX = '/_ah/api/images/v1'
-  TEST_IMAGE = images.Image(
-      key=ndb.Key(images.Image, 'fake_key'),
+  TEST_IMAGE = models.Image(
+      key=ndb.Key(models.Image, 'fake_key'),
       name='test image',
       url='test_url',
       metadata={'test_arg': 'test_value'})
@@ -34,6 +35,8 @@ class ImagesApiTest(unittest.TestCase):
 
     self.client = mock.Mock(images.ImagesClient)
     self.client.parse_key = images.ImagesClient.parse_key
+
+    @endpoints.api(name='images', version='v1')
     class _TestImagesApi(images_api.ImagesApi):
 
       def __init__(inner_self):
@@ -112,7 +115,7 @@ class ImagesApiTest(unittest.TestCase):
     self.client.update.assert_called_with(
         self.USER_ID,
         self.TEST_IMAGE.key,
-        images.Image(
+        models.Image(
             name = self.TEST_IMAGE.name,
             metadata = self.TEST_IMAGE.metadata),
         ['metadata'])

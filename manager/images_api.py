@@ -7,6 +7,7 @@ from protorpc import messages
 from protorpc import remote
 
 import images
+import models
 
 # Common messages
 
@@ -101,7 +102,7 @@ class ImagesApi(remote.Service):
 
   @classmethod
   def delta_proto_to_model(cls, proto_delta):
-    model = images.Image()
+    model = models.Image()
     model.name = proto_delta.name
     model.metadata = cls.metadata_proto_to_model(proto_delta.metadata)
     return model

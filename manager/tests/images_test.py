@@ -6,6 +6,8 @@ import unittest
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
+import models
+
 class _FakeImageWriter(object):
 
   PREFIX = 'fake_url/'
@@ -102,7 +104,7 @@ class ImagesTest(unittest.TestCase):
     self.assert_images(self.OTHER_USER_ID, [])
 
   def test_get_prefixes(self):
-    prefixes = images._get_prefixes('tee test')
+    prefixes = models._get_prefixes('tee test')
     self.assertEqual(set(prefixes), {'t', 'te', 'tee', 'tes', 'test'})
 
   def run_test_search(self, query, page_size=None):
