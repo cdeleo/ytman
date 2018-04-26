@@ -34,7 +34,8 @@ class UsersTest(unittest.TestCase):
     ndb.get_context().clear_cache()
 
     models.ClientSecret.set(self.CLIENT_SECRET)
-    self.exchanger = mock.MagicMock(return_value=self.CREDENTIALS)
+    self.exchanger = mock.Mock()
+    self.exchanger.exchange.return_value = self.CREDENTIALS
     self.client = users.UsersClient(
         self.CLIENT_ID, self.SCOPES, exchanger=self.exchanger)
 
@@ -51,5 +52,5 @@ class UsersTest(unittest.TestCase):
     self.assertEqual(
         self.client.exchange_auth_code(self.AUTH_CODE).to_json(),
         self.CREDENTIALS.to_json())
-    self.exchanger.assert_called_with(
+    self.exchanger.exchange.assert_called_with(
         self.CLIENT_ID, self.CLIENT_SECRET, self.SCOPES, self.AUTH_CODE)

@@ -111,6 +111,26 @@
       },
       "type": "object"
     },
+    "UsersApiProvideCredentialsRequest": {
+      "properties": {
+        "auth_code": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UsersApiProvideCredentialsResponse": {
+      "properties": {},
+      "type": "object"
+    },
+    "UsersApiVerifyCredentialsResponse": {
+      "properties": {
+        "has_credentials": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "VideosApiPublishRequest": {
       "properties": {
         "bg_key": {
@@ -258,6 +278,40 @@
             "description": "A successful response",
             "schema": {
               "$ref": "#/definitions/ImagesApiUpdateResponse"
+            }
+          }
+        }
+      }
+    },
+    "/ytman/v1/users/credentials": {
+      "get": {
+        "operationId": "UsersApi_verifyCredentialsHandler",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/UsersApiVerifyCredentialsResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "UsersApi_provideCredentialsHandler",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/UsersApiProvideCredentialsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/UsersApiProvideCredentialsResponse"
             }
           }
         }

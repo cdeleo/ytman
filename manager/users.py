@@ -29,5 +29,5 @@ class UsersClient(object):
     models.User(id=user_id, credentials=credentials.to_json()).put()
 
   def exchange_auth_code(self, auth_code):
-    return self._exchanger(
+    return self._exchanger.exchange(
         self.client_id, self._client_secret, self.scopes, auth_code)

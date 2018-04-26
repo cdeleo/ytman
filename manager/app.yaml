@@ -17,4 +17,4 @@ libraries:
 
 env_variables:
   ENDPOINTS_SERVICE_NAME: youtube-manager-196811.appspot.com
-  ENDPOINTS_SERVICE_VERSION: 2018-04-25r1
+  ENDPOINTS_SERVICE_VERSION: 2018-04-26r0
