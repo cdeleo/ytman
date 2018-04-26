@@ -8,7 +8,11 @@ class ClientSecret(ndb.Model):
 
   @classmethod
   def get(cls):
-    return ndb.Key(cls, cls._GLOBAL_ID).get().secret
+    entity = ndb.Key(cls, cls._GLOBAL_ID).get()
+    if entity:
+      return entity.secret
+    else:
+      return None
 
   @classmethod
   def set(cls, secret):

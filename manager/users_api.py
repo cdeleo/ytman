@@ -4,6 +4,9 @@ import os
 from protorpc import messages
 from protorpc import remote
 
+import constants
+import users
+
 class VerifyCredentialsRequest(messages.Message):
   pass
 
@@ -18,6 +21,16 @@ class ProvideCredentialsResponse(messages.Message):
 
 class UsersApi(remote.Service):
 
+  def __init__(self):
+    self.client = users.UsersClient(constants.WEB_CLIENT_ID, constants.SCOPES)
+
+  @classmethod
+  def get_current_user_id(cls):
+    user = endpoints.get_current_user()
+    if not user:
+      raise endpoints.UnauthorizedException
+    return user.user_id()
+
   @endpoints.method(
       VerifyCredentialsRequest,
       VerifyCredentialsResponse,
@@ -25,7 +38,8 @@ class UsersApi(remote.Service):
       http_method='GET',
       name='verify_credentials')
   def verify_credentials_handler(self, req):
-    return VerifyCredentialsResponse()
+    credentials = self.client.get_credentials(self.get_current_user_id())
+    return VerifyCredentialsResponse(has_credentials=credentials is not None)
 
   @endpoints.method(
       ProvideCredentialsRequest,
@@ -34,4 +48,6 @@ class UsersApi(remote.Service):
       http_method='POST',
       name='provide_credentials')
   def provide_credentials_handler(self, req):
+    credentials = self.client.exchange_auth_code(req.auth_code)
+    self.client.set_credentials(self.get_current_user_id(), credentials)
     return ProvideCredentialsResponse()
