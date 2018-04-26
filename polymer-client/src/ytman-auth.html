@@ -1,0 +1,51 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-signin/google-signin-aware.html">
+
+<dom-module id="ytman-auth">
+  <template>
+    <google-signin-aware
+        id="signin"
+        scopes="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.force-ssl"
+        on-google-signin-offline-success="_onOfflineSuccess"></google-signin-aware>
+
+    <google-client-loader
+        app-id="youtube-manager-196811"
+        name="ytman"
+        version="v1"
+        on-google-api-load="_onLoadApi"></google-client-loader>
+  </template>
+
+  <script>
+    class YtmanAuth extends Polymer.Element {
+      static get is() { return 'ytman-auth'; }
+      static get properties() {
+        return {};
+      }
+
+      static get observers() {
+        return [
+          '_sendOfflineAuth(_apiLoaded, _offlineResponse)',
+        ];
+      }
+
+      _onLoadApi() {
+        gapi.client.ytman.users.verify_credentials().then(
+          response => {
+            if (!response.result.has_credentials) {
+              this.$.signin.offlineAlwaysPrompt = true;
+            }
+          }
+        )
+      }
+
+      _onOfflineSuccess(response) {
+        if (response.detail.code) {
+          gapi.client.ytman.users.provide_credentials(
+              {auth_code: response.detail.code});
+        }
+      }
+    }
+
+    window.customElements.define(YtmanAuth.is, YtmanAuth);
+  </script>
+</dom-module>

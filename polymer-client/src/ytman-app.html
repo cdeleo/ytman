@@ -6,6 +6,7 @@
 <link rel="import" href="../bower_components/google-signin/google-signin.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="ytman-auth.html">
 <link rel="import" href="ytman-images.html">
 <link rel="import" href="ytman-style.html">
 <link rel="import" href="ytman-videos.html">
@@ -52,6 +53,8 @@
         pattern="/:section"
         data="{{routeData}}"
         tail="{{subroute}}"></app-route>
+
+    <ytman-auth></ytman-auth>
 
     <app-header-layout fullbleed>
       <app-header slot="header" condenses reveals effects="waterfall">
