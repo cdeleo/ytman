@@ -1,8 +1,21 @@
 from google.appengine.api import search
 from google.appengine.ext import ndb
 
+class ClientSecret(ndb.Model):
+  secret = ndb.StringProperty(indexed=False)
+
+  _GLOBAL_ID = 'client_secret'
+
+  @classmethod
+  def get(cls):
+    return ndb.Key(cls, cls._GLOBAL_ID).get().secret
+
+  @classmethod
+  def set(cls, secret):
+    cls(id=cls._GLOBAL_ID, secret=secret).put()
+
 class User(ndb.Model):
-  pass
+  credentials = ndb.TextProperty()
 
 def _get_prefixes(value):
   prefixes = set()
