@@ -43,6 +43,7 @@ class ImagesClient(object):
   def set_default_page_size(self, default_page_size):
     self._default_page_size = default_page_size
 
+  @dpy.Inject
   def list(self, token=None, page_size=None, user_id=dpy.IN):
     if page_size is None:
       page_size = self._default_page_size
@@ -56,6 +57,7 @@ class ImagesClient(object):
             .fetch_page(**fetch_args))
     return results, cursor.to_websafe_string() if cursor and more else None
 
+  @dpy.Inject
   def search(self, query, page_size=None, user_id=dpy.IN):
     if not query:
       return []
@@ -68,6 +70,7 @@ class ImagesClient(object):
     docs = search.Index(models.Image.get_index_name(user_id)).search(query_obj)
     return ndb.get_multi([self.parse_key(doc.doc_id) for doc in docs])
 
+  @dpy.Inject
   def create(self, name, data, metadata, user_id=dpy.IN):
     key = ndb.Key(
         models.User, user_id, models.Image, models.Image.allocate_ids(1)[0])
@@ -82,6 +85,7 @@ class ImagesClient(object):
       raise CrossUserError(
           'Expected user %s, found %s' % (user_id, key_user_id))
 
+  @dpy.Inject
   def update(self, key, delta, mask, user_id=dpy.IN):
     self._check_cross_user(user_id, key)
     image = key.get()
@@ -96,6 +100,7 @@ class ImagesClient(object):
     image.put()
     return image
 
+  @dpy.Inject
   def delete(self, key, user_id=dpy.IN):
     self._check_cross_user(user_id, key)
     key.delete()

@@ -24,6 +24,7 @@ class UsersClient(object):
     self._exchanger = auth_code_exchanger
     self._client_secret = models.ClientSecret.get()
 
+  @dpy.Inject
   def get_credentials(self, user_id=dpy.IN):
     user = ndb.Key(models.User, user_id).get()
     if user and user.credentials:
@@ -31,6 +32,7 @@ class UsersClient(object):
     else:
       return None
 
+  @dpy.Inject
   def set_credentials(self, credentials, user_id=dpy.IN):
     models.User(id=user_id, credentials=credentials.to_json()).put()
 
