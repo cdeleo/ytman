@@ -1,5 +1,5 @@
+import dpy
 import endpoints
-import os
 
 from protorpc import messages
 from protorpc import remote
@@ -19,10 +19,11 @@ class ProvideCredentialsRequest(messages.Message):
 class ProvideCredentialsResponse(messages.Message):
   pass
 
+@dpy.Inject
 class UsersApi(remote.Service):
 
-  def __init__(self):
-    self.client = users.UsersClient(constants.WEB_CLIENT_ID, constants.SCOPES)
+  def __init__(self, users_client=dpy.IN):
+    self.client = users_client
 
   @classmethod
   def get_current_user_id(cls):

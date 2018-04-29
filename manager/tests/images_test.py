@@ -1,12 +1,15 @@
 import images
 
 import collections
+import dpy
 import unittest
 
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 import models
+
+dpy.SetTestMode()
 
 class _FakeImageWriter(object):
 
@@ -64,7 +67,8 @@ class ImagesTest(unittest.TestCase):
     ndb.get_context().clear_cache()
 
     self.writer = _FakeImageWriter()
-    self.client = images.ImagesClient(writer=self.writer, default_page_size=2)
+    self.client = images.ImagesClient(image_writer=self.writer)
+    self.client.set_default_page_size(2)
 
   def tearDown(self):
     self.testbed.deactivate()

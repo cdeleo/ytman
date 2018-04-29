@@ -1,21 +1,27 @@
+import dpy
+
 from google.appengine.ext import ndb
 from oauth2client import client as oauth2client
 
+import constants
 import models
 
+@dpy.Injectable.named('auth_code_exchanger')
 class _OAuth2AuthCodeExchanger(object):
 
-  def exchange(self, client_id, client_secret, scopes, auth_code):
-    return oauth2client.credentials_from_code(
-        client_id, client_secret, scopes, auth_code)
+  def __init__(self):
+    pass
 
+  def exchange(
+      self, client_secret, auth_code, web_client_id=dpy.IN, scopes=dpy.IN):
+    return oauth2client.credentials_from_code(
+        web_client_id, client_secret, scopes, auth_code)
+
+@dpy.Injectable.named('users_client')
 class UsersClient(object):
 
-  def __init__(self, client_id, scopes, exchanger=None):
-    self.client_id = client_id
-    self.scopes = scopes
-    self._exchanger = exchanger if exchanger else _OAuth2AuthCodeExchanger()
-
+  def __init__(self, auth_code_exchanger=dpy.IN):
+    self._exchanger = auth_code_exchanger
     self._client_secret = models.ClientSecret.get()
 
   def get_credentials(self, user_id):
@@ -29,5 +35,4 @@ class UsersClient(object):
     models.User(id=user_id, credentials=credentials.to_json()).put()
 
   def exchange_auth_code(self, auth_code):
-    return self._exchanger.exchange(
-        self.client_id, self._client_secret, self.scopes, auth_code)
+    return self._exchanger.exchange(self._client_secret, auth_code)

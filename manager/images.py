@@ -1,4 +1,5 @@
 import cloudstorage as gcs
+import dpy
 
 from google.appengine.api import app_identity
 from google.appengine.api import images
@@ -7,7 +8,11 @@ from google.appengine.ext import ndb
 
 import models
 
+@dpy.Injectable.named('image_writer')
 class _GcsImageWriter(object):
+
+  def __init__(self):
+    pass
 
   def write(self, key, data):
     filename = '/%s/images/%s/%s.png' % (
@@ -26,10 +31,16 @@ class _GcsImageWriter(object):
 class CrossUserError(Exception):
   pass
 
+@dpy.Injectable.named('images_client')
 class ImagesClient(object):
 
-  def __init__(self, writer=None, default_page_size=10):
-    self._writer = writer if writer else _GcsImageWriter()
+  _DEFAULT_PAGE_SIZE = 10
+
+  def __init__(self, image_writer=dpy.IN):
+    self._writer = image_writer
+    self._default_page_size = self._DEFAULT_PAGE_SIZE
+
+  def set_default_page_size(self, default_page_size):
     self._default_page_size = default_page_size
 
   def list(self, user_id, token=None, page_size=None):

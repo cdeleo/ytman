@@ -1,4 +1,5 @@
 import base64
+import dpy
 import endpoints
 import json
 
@@ -76,12 +77,13 @@ class DeleteResponse(messages.Message):
 
 # Service
 
+@dpy.Inject
 class ImagesApi(remote.Service):
 
   MAX_PAGE_SIZE = 25
 
-  def __init__(self):
-    self.client = images.ImagesClient()
+  def __init__(self, images_client=dpy.IN):
+    self.client = images_client
 
   @classmethod
   def get_page_size(cls, page_size):

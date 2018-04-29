@@ -1,5 +1,6 @@
 import users_api
 
+import dpy
 import endpoints
 import mock
 import unittest
@@ -11,6 +12,8 @@ from google.appengine.ext import testbed
 import images
 import models
 import users
+
+dpy.SetTestMode()
 
 class UsersApiTest(unittest.TestCase):
 
@@ -29,8 +32,7 @@ class UsersApiTest(unittest.TestCase):
     class _TestUsersApi(users_api.UsersApi):
 
       def __init__(inner_self):
-        super(_TestUsersApi, inner_self).__init__()
-        inner_self.client = self.client
+        super(_TestUsersApi, inner_self).__init__(users_client=self.client)
 
       @classmethod
       def get_current_user_id(cls):

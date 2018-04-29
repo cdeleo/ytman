@@ -1,5 +1,6 @@
 import users
 
+import dpy
 import mock
 import unittest
 
@@ -9,11 +10,12 @@ from oauth2client import client as oauth2client
 
 import models
 
+dpy.SetTestMode()
+
 class UsersTest(unittest.TestCase):
 
   CLIENT_ID = 'fake_client_id'
   CLIENT_SECRET = 'fake_client_secret'
-  SCOPES = 'fake_scope'
 
   USER_ID = 'test@example.com'
   AUTH_CODE = 'fake_auth_code'
@@ -36,8 +38,7 @@ class UsersTest(unittest.TestCase):
     models.ClientSecret.set(self.CLIENT_SECRET)
     self.exchanger = mock.Mock()
     self.exchanger.exchange.return_value = self.CREDENTIALS
-    self.client = users.UsersClient(
-        self.CLIENT_ID, self.SCOPES, exchanger=self.exchanger)
+    self.client = users.UsersClient(auth_code_exchanger=self.exchanger)
 
   def test_get_credentials_none(self):
     self.assertIsNone(self.client.get_credentials(self.USER_ID))
@@ -53,4 +54,4 @@ class UsersTest(unittest.TestCase):
         self.client.exchange_auth_code(self.AUTH_CODE).to_json(),
         self.CREDENTIALS.to_json())
     self.exchanger.exchange.assert_called_with(
-        self.CLIENT_ID, self.CLIENT_SECRET, self.SCOPES, self.AUTH_CODE)
+        self.CLIENT_SECRET, self.AUTH_CODE)

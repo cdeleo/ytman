@@ -1,0 +1,3 @@
+[submodule "manager/dpy"]
+	path = manager/dpy
+	url = https://github.com/google/dpy
