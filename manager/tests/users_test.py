@@ -41,10 +41,10 @@ class UsersTest(unittest.TestCase):
     self.client = users.UsersClient(auth_code_exchanger=self.exchanger)
 
   def test_get_credentials_none(self):
-    self.assertIsNone(self.client.get_credentials(self.USER_ID))
+    self.assertIsNone(self.client.get_credentials(user_id=self.USER_ID))
 
   def test_set_credentials(self):
-    self.client.set_credentials(self.USER_ID, self.CREDENTIALS)
+    self.client.set_credentials(self.CREDENTIALS, user_id=self.USER_ID)
     self.assertEqual(
         self.client.get_credentials(self.USER_ID).to_json(),
         self.CREDENTIALS.to_json())

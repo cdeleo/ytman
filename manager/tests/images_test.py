@@ -48,7 +48,7 @@ class ImagesTest(unittest.TestCase):
   def assert_images(
       self, user_id, expected_keys_and_images,
       token=None, next_token_should_be_none=True):
-    results, token = self.client.list(user_id, token)
+    results, token = self.client.list(token, user_id=user_id)
     self.assertEqual(len(results), len(expected_keys_and_images))
     for result, (key, expected) in zip(results, expected_keys_and_images):
       self.assert_image(key, result, expected)
@@ -76,7 +76,7 @@ class ImagesTest(unittest.TestCase):
   def test_list(self):
     image = self.get_test_image(0)
     key = self.client.create(
-        self.USER_ID, image.name, image.data, image.metadata).key
+        image.name, image.data, image.metadata, user_id=self.USER_ID).key
     self.assert_images(self.USER_ID, [(key, image)])
 
   def test_list_continue(self):
@@ -85,7 +85,7 @@ class ImagesTest(unittest.TestCase):
       image = self.get_test_image(i)
       keys.append(
           self.client.create(
-              self.USER_ID, image.name, image.data, image.metadata).key)
+              image.name, image.data, image.metadata, user_id=self.USER_ID).key)
     token = self.assert_images(
         self.USER_ID,
         [(keys[0], self.get_test_image(0)), (keys[1], self.get_test_image(1))],
@@ -97,14 +97,15 @@ class ImagesTest(unittest.TestCase):
     for i in xrange(3):
       image = self.get_test_image(i)
       self.client.create(
-          self.USER_ID, image.name, image.data, image.metadata)
-    self.assertEqual(len(self.client.list(self.USER_ID)[0]), 2);
-    self.assertEqual(len(self.client.list(self.USER_ID, page_size=3)[0]), 3);
+          image.name, image.data, image.metadata, user_id=self.USER_ID)
+    self.assertEqual(len(self.client.list(user_id=self.USER_ID)[0]), 2);
+    self.assertEqual(
+        len(self.client.list(page_size=3, user_id=self.USER_ID)[0]), 3);
 
   def test_list_cross_user(self):
     image = self.get_test_image(0)
     key = self.client.create(
-        self.USER_ID, image.name, image.data, image.metadata).key
+        image.name, image.data, image.metadata, user_id=self.USER_ID).key
     self.assert_images(self.OTHER_USER_ID, [])
 
   def test_get_prefixes(self):
@@ -117,13 +118,13 @@ class ImagesTest(unittest.TestCase):
       image = self.get_test_image(i)
       keys.append(
           self.client.create(
-              self.USER_ID, image.name, image.data, image.metadata).key)
+              image.name, image.data, image.metadata, user_id=self.USER_ID).key)
 
     if page_size:
       kwargs = {'page_size': page_size}
     else:
       kwargs = {}
-    return keys, self.client.search(self.USER_ID, query, **kwargs)
+    return keys, self.client.search(query, user_id=self.USER_ID, **kwargs)
 
   def test_search_no_results(self):
     _, results = self.run_test_search('absent')
@@ -145,7 +146,7 @@ class ImagesTest(unittest.TestCase):
   def test_create(self):
     image = self.get_test_image(0)
     key = self.client.create(
-        self.USER_ID, image.name, image.data, image.metadata).key
+        image.name, image.data, image.metadata, user_id=self.USER_ID).key
 
     result = key.get()
     self.assert_image(key, result, image)
@@ -158,7 +159,7 @@ class ImagesTest(unittest.TestCase):
     image.metadata['arg_to_update'] = 'value_to_update'
     image.metadata['arg_to_delete'] = 'value_to_delete'
     key = self.client.create(
-        self.USER_ID, image.name, image.data, image.metadata).key
+        image.name, image.data, image.metadata, user_id=self.USER_ID).key
 
     # Delta
     delta = self.get_test_image(0)
@@ -176,7 +177,8 @@ class ImagesTest(unittest.TestCase):
         {'arg_to_add': 'value_added', 'arg_to_update': 'value_updated'})
 
     key, _, delta = self.prepare_update()
-    result = self.client.update(self.USER_ID, key, delta, ['name', 'metadata'])
+    result = self.client.update(
+        key, delta, ['name', 'metadata'], user_id=self.USER_ID)
     self.assert_image(key, result, expected)
     self.assert_images(self.USER_ID, [(key, expected)])
 
@@ -186,7 +188,7 @@ class ImagesTest(unittest.TestCase):
         {'arg_to_add': 'value_added', 'arg_to_update': 'value_updated'})
 
     key, _, delta = self.prepare_update()
-    result = self.client.update(self.USER_ID, key, delta, ['metadata'])
+    result = self.client.update(key, delta, ['metadata'], user_id=self.USER_ID)
     self.assert_image(key, result, expected)
     self.assert_images(self.USER_ID, [(key, expected)])
 
@@ -198,22 +200,23 @@ class ImagesTest(unittest.TestCase):
 
     key, image, delta = self.prepare_update()
     with self.assertRaises(images.CrossUserError):
-      self.client.update(self.OTHER_USER_ID, key, delta, ['name', 'metadata'])
+      self.client.update(
+          key, delta, ['name', 'metadata'], user_id=self.OTHER_USER_ID)
     self.assert_images(self.USER_ID, [(key, image)])
 
   def test_delete(self):
     image = self.get_test_image(0)
     key = self.client.create(
-        self.USER_ID, image.name, image.data, image.metadata).key
-    self.client.delete(self.USER_ID, key)
+        image.name, image.data, image.metadata, user_id=self.USER_ID).key
+    self.client.delete(key, user_id=self.USER_ID)
     self.assert_images(self.USER_ID, [])
 
   def test_delete_cross_user(self):
     image = self.get_test_image(0)
     key = self.client.create(
-        self.USER_ID, image.name, image.data, image.metadata).key
+        image.name, image.data, image.metadata, user_id=self.USER_ID).key
     with self.assertRaises(images.CrossUserError):
-      self.client.delete(self.OTHER_USER_ID, key)
+      self.client.delete(key, user_id=self.OTHER_USER_ID)
     self.assert_images(self.USER_ID, [(key, image)])
 
 if __name__ == '__main__':

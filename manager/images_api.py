@@ -7,6 +7,7 @@ from protorpc import message_types
 from protorpc import messages
 from protorpc import remote
 
+import auth
 import images
 import models
 
@@ -113,26 +114,20 @@ class ImagesApi(remote.Service):
   def metadata_proto_to_model(cls, proto_metadata):
     return {p.key: p.value for p in proto_metadata}
 
-  @classmethod
-  def get_current_user_id(cls):
-    user = endpoints.get_current_user()
-    if not user:
-      raise endpoints.UnauthorizedException
-    return user.user_id()
-
   @endpoints.method(
       LIST_RESOURCE,
       ListResponse,
       path='list',
       http_method='GET',
       name='list')
+  @auth.require_auth
   def list_handler(self, req):
     kwargs = {}
     if req.token:
       kwargs['token'] = req.token
     if req.page_size:
       kwargs['page_size'] = self.get_page_size(req.page_size)
-    images, next_token = self.client.list(self.get_current_user_id(), **kwargs)
+    images, next_token = self.client.list(**kwargs)
     resp = ListResponse()
     resp.images = [self.image_model_to_proto(r) for r in images]
     if next_token:
@@ -145,11 +140,12 @@ class ImagesApi(remote.Service):
       path='search',
       http_method='GET',
       name='search')
+  @auth.require_auth
   def search_handler(self, req):
     kwargs = {}
     if req.page_size:
       kwargs['page_size'] = self.get_page_size(req.page_size)
-    images = self.client.search(self.get_current_user_id(), req.q, **kwargs)
+    images = self.client.search(req.q, **kwargs)
     resp = SearchResponse()
     resp.images = [self.image_model_to_proto(r) for r in images]
     return resp
@@ -168,9 +164,9 @@ class ImagesApi(remote.Service):
       path='create',
       http_method='POST',
       name='create')
+  @auth.require_auth
   def create_handler(self, req):
     image = self.client.create(
-        self.get_current_user_id(),
         req.name,
         self._decode_data(req.data),
         self.metadata_proto_to_model(req.metadata))
@@ -184,9 +180,9 @@ class ImagesApi(remote.Service):
       path='{key}',
       http_method='PUT',
       name='update')
+  @auth.require_auth
   def update_handler(self, req):
     image = self.client.update(
-        self.get_current_user_id(),
         self.client.parse_key(req.key),
         self.delta_proto_to_model(req.delta),
         req.mask)
@@ -200,7 +196,7 @@ class ImagesApi(remote.Service):
       path='{key}',
       http_method='DELETE',
       name='delete')
+  @auth.require_auth
   def delete_handler(self, req):
-    self.client.delete(
-        self.get_current_user_id(), self.client.parse_key(req.key))
+    self.client.delete(self.client.parse_key(req.key))
     return DeleteResponse()

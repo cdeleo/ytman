@@ -24,14 +24,14 @@ class UsersClient(object):
     self._exchanger = auth_code_exchanger
     self._client_secret = models.ClientSecret.get()
 
-  def get_credentials(self, user_id):
+  def get_credentials(self, user_id=dpy.IN):
     user = ndb.Key(models.User, user_id).get()
     if user and user.credentials:
       return oauth2client.OAuth2Credentials.from_json(user.credentials)
     else:
       return None
 
-  def set_credentials(self, user_id, credentials):
+  def set_credentials(self, credentials, user_id=dpy.IN):
     models.User(id=user_id, credentials=credentials.to_json()).put()
 
   def exchange_auth_code(self, auth_code):

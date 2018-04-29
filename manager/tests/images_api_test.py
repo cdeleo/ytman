@@ -36,6 +36,9 @@ class ImagesApiTest(unittest.TestCase):
     self.testbed.activate()
     self.testbed.init_all_stubs()
 
+    endpoints.get_current_user = mock.Mock()
+    endpoints.get_current_user().user_id.return_value = self.USER_ID
+
     self.client = mock.Mock(images.ImagesClient)
     self.client.parse_key = images.ImagesClient.parse_key
 
@@ -44,10 +47,6 @@ class ImagesApiTest(unittest.TestCase):
 
       def __init__(inner_self):
         super(_TestImagesApi, inner_self).__init__(images_client=self.client)
-
-      @classmethod
-      def get_current_user_id(cls):
-        return self.USER_ID
 
     self.app = webtest.TestApp(endpoints.api_server([_TestImagesApi]))
 
@@ -61,7 +60,7 @@ class ImagesApiTest(unittest.TestCase):
     resp = self.app.get(self.API_PREFIX + '/list')
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'images': [self.TEST_IMAGE_JSON]})
-    self.client.list.assert_called_with(self.USER_ID)
+    self.client.list.assert_called_with()
 
   def test_list_continue(self):
     self.client.list.return_value = [self.TEST_IMAGE], 'test_token_1'
@@ -69,28 +68,28 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(
         resp.json, {'images': [self.TEST_IMAGE_JSON], 'token': 'test_token_1'})
-    self.client.list.assert_called_with(self.USER_ID, token='test_token_0')
+    self.client.list.assert_called_with(token='test_token_0')
 
   def test_list_page_size(self):
     self.client.list.return_value = [self.TEST_IMAGE], None
     resp = self.app.get(self.API_PREFIX + '/list?page_size=20')
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'images': [self.TEST_IMAGE_JSON]})
-    self.client.list.assert_called_with(self.USER_ID, page_size=20)
+    self.client.list.assert_called_with(page_size=20)
 
   def test_search(self):
     self.client.search.return_value = [self.TEST_IMAGE]
     resp = self.app.get(self.API_PREFIX + '/search?q=ima')
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'images': [self.TEST_IMAGE_JSON]})
-    self.client.search.assert_called_with(self.USER_ID, 'ima')
+    self.client.search.assert_called_with('ima')
 
   def test_search_page_size(self):
     self.client.search.return_value = [self.TEST_IMAGE]
     resp = self.app.get(self.API_PREFIX + '/search?q=ima&page_size=20')
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'images': [self.TEST_IMAGE_JSON]})
-    self.client.search.assert_called_with(self.USER_ID, 'ima', page_size=20)
+    self.client.search.assert_called_with('ima', page_size=20)
 
   def test_create(self):
     self.client.create.return_value = self.TEST_IMAGE
@@ -102,7 +101,6 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'image': self.TEST_IMAGE_JSON})
     self.client.create.assert_called_with(
-        self.USER_ID,
         self.TEST_IMAGE.name,
         self.IMAGE_DATA_DECODED,
         self.TEST_IMAGE.metadata)
@@ -115,7 +113,6 @@ class ImagesApiTest(unittest.TestCase):
     self.assertEqual(self.get_status_code(resp), 200)
     self.assertEqual(resp.json, {'image': self.TEST_IMAGE_JSON})
     self.client.update.assert_called_with(
-        self.USER_ID,
         self.TEST_IMAGE.key,
         models.Image(
             name = self.TEST_IMAGE.name,
@@ -125,7 +122,7 @@ class ImagesApiTest(unittest.TestCase):
   def test_delete(self):
     resp = self.app.delete(self.API_PREFIX + '/' + self.TEST_IMAGE_JSON['key'])
     self.assertEqual(self.get_status_code(resp), 200)
-    self.client.delete.assert_called_with(self.USER_ID, self.TEST_IMAGE.key)
+    self.client.delete.assert_called_with(self.TEST_IMAGE.key)
 
   # Utility functions
 
