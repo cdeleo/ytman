@@ -5,7 +5,7 @@ import com.google.appengine.api.appidentity.AppIdentityServiceFactory;
 import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
-import com.google.api.server.spi.auth.common.User;
+import com.google.appengine.api.users.User;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
@@ -56,7 +56,7 @@ public class ThumbnailsV1 {
   @ApiMethod(name = "get", path = "get")
   public GetResponse get(
       User user,
-      @Named("bgKey") String bgKey,
+      @Named("bg_key") String bgKey,
       @Named("title") String title,
       @Named("subtitle") String subtitle) throws Exception {
     // Validation
@@ -79,7 +79,7 @@ public class ThumbnailsV1 {
 
     // Response generation
     GetResponse response = new GetResponse();
-    response.setImageData(out.toByteArray());
+    response.setImage_data(out.toByteArray());
     return response;
   }
 
@@ -96,7 +96,7 @@ public class ThumbnailsV1 {
       throws Exception {
     BufferedImage bgImage = ImageIO.read(
         new ByteArrayInputStream(
-            readBgImage(user.userId(), bgKey).getImageData()));
+            readBgImage(user.getUserId(), bgKey).getImageData()));
     BufferedImage image = generator.generate(bgImage, title, subtitle);
     ImageIO.write(image, "png", out);
   }
@@ -105,11 +105,11 @@ public class ThumbnailsV1 {
 
     private byte[] imageData;
 
-    public byte[] getImageData() {
+    public byte[] getImage_data() {
       return imageData;
     }
 
-    public void setImageData(byte[] imageData) {
+    public void setImage_data(byte[] imageData) {
       this.imageData = imageData;
     }
   }
