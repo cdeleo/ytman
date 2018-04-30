@@ -23,16 +23,33 @@ def _provide_youtube_service(credentials=dpy.IN):
 @dpy.Injectable.named('videos_client')
 class VideosClient(object):
 
-  def __init__(self, youtube_service=dpy.IN):
-    self._youtube_service = youtube_service
-
-  def set_thumbnail(self, video_id, thumbnail_data):
-    request = {
-      'videoId': video_id,
-      'media_body': MediaIoBaseUpload(
-          io.BytesIO(thumbnail_data), mimetype='image/png'),
-    }
-    self._youtube_service.thumbnails().set(**request).execute()
-
-  def set_metadata(self, video_id, description=None, publish_status=None):
+  def __init__(self):
     pass
+
+  @dpy.Inject
+  def set_thumbnail(self, video_id, thumbnail_data, youtube_service=dpy.IN):
+    youtube_service.thumbnails().set(
+        videoId=video_id,
+        media_body=MediaIoBaseUpload(
+            io.BytesIO(thumbnail_data), mimetype='image/png')).execute()
+
+  @dpy.Inject
+  def set_metadata(
+      self, video_id, title, subtitle,
+      description=None, publish_status=None, youtube_service=dpy.IN):
+    parts = ['snippet']
+    if publish_status:
+      parts.append('status')
+
+    read_response = youtube_service.videos().list(
+        id=video_id, part=','.join(parts)).execute()
+    video = read_response['items'][0]
+
+    video['snippet']['title'] = '%s - %s' % (title, subtitle)
+    if description:
+      video['snippet']['description'] = description
+    if publish_status:
+      video['status']['privacyStatus'] = publish_status
+
+    youtube_service.videos().update(
+        part=','.join(parts), body=video).execute()

@@ -33,7 +33,11 @@ class VideosApi(remote.Service):
       name='publish')
   @auth.require_auth
   def publish_handler(self, req):
+    print 'Starting publish with %s' % req
     thumbnail_data = self._thumbnails_client.get(
         req.bg_key, req.title, req.subtitle)
     self._videos_client.set_thumbnail(req.video_id, thumbnail_data)
+    self._videos_client.set_metadata(
+        req.video_id, req.title, req.subtitle,
+        description=req.description, publish_status='private')
     return PublishResponse()

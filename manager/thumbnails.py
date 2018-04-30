@@ -22,16 +22,17 @@ def _provide_thumbnails_service(credentials=dpy.IN):
 @dpy.Injectable.named('thumbnails_client')
 class ThumbnailsClient(object):
 
-  def __init__(self, thumbnails_service=dpy.IN):
-    self._thumbnails_service = thumbnails_service
+  def __init__(self):
+    pass
 
-  def get(self, bg_key, title, subtitle):
+  @dpy.Inject
+  def get(self, bg_key, title, subtitle, thumbnails_service=dpy.IN):
     request = {
       'bg_key': bg_key,
       'title': title,
       'subtitle': subtitle,
     }
-    response = self._thumbnails_service.get(**request).execute()
+    response = thumbnails_service.get(**request).execute()
     image_data = str(response['image_data'])
     padding = 4 - (len(image_data) % 4)
     if padding != 4:
