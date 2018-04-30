@@ -96,6 +96,18 @@
         super();
         this.clientId = "955262123852-c1gthms5mhs36q6njvg6kgqu4f1b09q7.apps.googleusercontent.com";
       }
+
+      static get observers() {
+        return [
+          '_checkRoute(route.path)',
+        ];
+      }
+
+      _checkRoute(route_path) {
+        if (route_path == '/') {
+          this.set('route.path', '/videos');
+        }
+      }
     }
 
     window.customElements.define(YtmanApp.is, YtmanApp);
