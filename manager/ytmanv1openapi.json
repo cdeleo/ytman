@@ -156,7 +156,7 @@
       "type": "object"
     }
   },
-  "host": "youtube-manager-196811.appspot.com",
+  "host": "backend-dot-youtube-manager-196811.appspot.com",
   "info": {
     "title": "ytman",
     "version": "v1"
