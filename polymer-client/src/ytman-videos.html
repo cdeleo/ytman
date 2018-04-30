@@ -13,6 +13,7 @@
     <iron-pages attr-for-selected="key" selected="{{page}}">
       <div key="main">
         <ytman-videos-pending-list
+            id="pendingVideosList"
             selected-video={{_selectedPendingVideo}}
             on-video-clicked="_onPendingVideoClicked">
         </ytman-videos-pending-list>
@@ -21,7 +22,8 @@
         <ytman-videos-publish
             id="videosPublish"
             video="[[_selectedPendingVideo]]"
-            on-back-clicked="_goList"></ytman-videos-publish>
+            on-back-clicked="_goList"
+            on-publish-done="_onPublishDone"></ytman-videos-publish>
       </div>
     </iron-pages>
   </template>
@@ -60,6 +62,11 @@
 
       _goList() {
         this.set('route.path', '');
+      }
+
+      _onPublishDone() {
+        this.$.pendingVideosList.reload();
+        this._goList();
       }
     }
 

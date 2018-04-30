@@ -36,13 +36,9 @@
     <mtg-io id="mtgIo"></mtg-io>
 
     <google-client-loader
-        app-id="thumbnails-dot-youtube-manager-196811"
-        name="thumbnails"
+        app-id="youtube-manager-196811"
+        name="ytman"
         version="v1"></google-client-loader>
-
-    <google-client-loader
-        name="youtube"
-        version="v3"></google-client-loader>
 
     <div class="input-pane">
       <paper-icon-button
@@ -175,34 +171,17 @@
       }
 
       _onPublishClick() {
-        const thumbnailRequest = {
-          bgKey: this._bgKey,
+        const request = {
+          video_id: this.video.id,
+          bg_key: this._bgKey,
           title: this.title,
           subtitle: this.subtitle,
+          description: this.description,
         };
-        gapi.client.thumbnails.get(thumbnailRequest).then(
+        gapi.client.ytman.videos.publish(request).then(
           response => {
-            let paddingSize = 4 - (response.result.imageData.length % 4);
-            if (paddingSize == 4) {
-              paddingSize = 0;
-            }
-            const data = base64js.toByteArray(
-                response.result.imageData + '='.repeat(paddingSize));
-            const setThumbnailRequest = {
-              videoId: this.video.id,
-              resource: data,
-            };
-            return gapi.client.youtube.thumbnails.set(setThumbnailRequest);
-            // const dataStr = this._convertToBinaryString(data);
-            // console.log('size ', dataStr.length);
-            // const args = {
-            //   path: 'https://www.googleapis.com/upload/youtube/v3/thumbnails/set',
-            //   method: 'POST',
-            //   params: {videoId: this.video.id},
-            //   headers: {'Content-Type': 'image/png', 'Content-Length': dataStr.length},
-            //   body: dataStr,
-            // };
-            // return gapi.client.request(args);
+            this.$.publishForm.reset();
+            this.dispatchEvent(new CustomEvent('publish-done'));
           }
         );
       }

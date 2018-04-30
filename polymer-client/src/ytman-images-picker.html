@@ -53,7 +53,11 @@
         <div class="layout horizontal wrap center-justified">
           <template is="dom-repeat" items="[[searchImages]]">
             <ytman-images-card
-                item=[[item]] on-deleted="_reloadSearch"></ytman-images-card>
+                item=[[item]]
+                allow-select=[[allowSelect]]
+                on-selected="_onSelected"
+                allow-delete=[[allowDelete]]
+                on-deleted="_reloadSearch"></ytman-images-card>
           </template>
         </div>
       </div>

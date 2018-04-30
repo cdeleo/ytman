@@ -67,6 +67,10 @@
         };
       }
 
+      reload() {
+        this.$.videosList.reload();
+      }
+
       _onVideoClick(e) {
         this.selectedVideo = e.model.item;
         this.dispatchEvent(new CustomEvent('video-clicked'));
