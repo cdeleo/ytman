@@ -28,6 +28,12 @@
         cursor: pointer;
       }
 
+      iframe {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
       [hidden] {
         display: none;
       }
@@ -43,6 +49,8 @@
     <div class="input-pane">
       <paper-icon-button
           icon="arrow-back" on-click="_goBack"></paper-icon-button>
+      <iframe type="text/html" width="640" height="360"
+          src="https://www.youtube.com/embed/[[video.id]]"></iframe>
       <iron-form id="publishForm">
         <form>
           <div class="layout horizontal">
