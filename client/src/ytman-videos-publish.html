@@ -87,7 +87,15 @@
           <paper-button
               raised
               disabled=[[!_isPublishEnabled]]
-              on-click="_onPublishClick">Publish</paper-button>
+              on-click="_onPublishNowClick">Publish Now</paper-button>
+          <paper-button
+              raised
+              disabled=[[!_isPublishEnabled]]
+              on-click="_onEnqueueClick">Enqueue</paper-button>
+          <paper-button
+              raised
+              disabled=[[!_isPublishEnabled]]
+              on-click="_onPreemptClick">Preempt</paper-button>
         </form>
       </iron-form>
     </div>
@@ -178,13 +186,14 @@
       	return b_str;
       }
 
-      _onPublishClick() {
+      _publish(publish_mode) {
         const request = {
           video_id: this.video.id,
           bg_key: this._bgKey,
           title: this.title,
           subtitle: this.subtitle,
           description: this.description,
+          publish_mode: publish_mode,
         };
         gapi.client.ytman.videos.publish(request).then(
           response => {
@@ -192,6 +201,18 @@
             this.dispatchEvent(new CustomEvent('publish-done'));
           }
         );
+      }
+
+      _onPublishNowClick() {
+        this._publish(2); // NOW
+      }
+
+      _onEnqueueClick() {
+        this._publish(3); // ENQUEUE
+      }
+
+      _onPreemptClick() {
+        this._publish(4); // PREEMPT
       }
     }
 
