@@ -9,6 +9,7 @@ import webtest
 from google.appengine.ext import testbed
 
 import thumbnails
+import video_queue
 import videos
 
 dpy.SetTestMode()
@@ -37,10 +38,14 @@ class VideosApiTest(unittest.TestCase):
 
     self.thumbnails_client = mock.Mock(thumbnails.ThumbnailsClient)
     self.thumbnails_client.get.return_value = self.THUMBNAIL_DATA
+
     self.videos_client = mock.Mock(videos.VideosClient)
     self.videos_client.PRIVATE = videos.VideosClient.PRIVATE
+    self.videos_client.PUBLIC = videos.VideosClient.PUBLIC
     self.videos_client.get_video_name.return_value = (
         videos.VideosClient.get_video_name(self.TITLE, self.SUBTITLE))
+
+    self.video_queue_client = mock.Mock(video_queue.VideoQueueClient)
 
     @endpoints.api(name='videos', version='v1')
     class _TestVideosApi(videos_api.VideosApi):
@@ -48,14 +53,15 @@ class VideosApiTest(unittest.TestCase):
       def __init__(inner_self):
         super(_TestVideosApi, inner_self).__init__(
             thumbnails_client=self.thumbnails_client,
-            videos_client=self.videos_client)
+            videos_client=self.videos_client,
+            video_queue_client=self.video_queue_client)
 
     self.app = webtest.TestApp(endpoints.api_server([_TestVideosApi]))
 
   def tearDown(self):
     self.testbed.deactivate()
 
-  def test_publish(self):
+  def check_publish(self, publish_mode, expected_publish_status):
     req = {
       'video_id': self.VIDEO_ID,
       'bg_key': self.BG_KEY,
@@ -63,6 +69,8 @@ class VideosApiTest(unittest.TestCase):
       'subtitle': self.SUBTITLE,
       'description': self.DESCRIPTION,
     }
+    if publish_mode:
+      req['publish_mode'] = publish_mode.number
     resp = self.app.post_json(self.API_PREFIX + '/publish', req)
     self.assertEqual(self.get_status_code(resp), 200)
     self.thumbnails_client.get.assert_called_with(
@@ -74,7 +82,38 @@ class VideosApiTest(unittest.TestCase):
     self.videos_client.set_metadata.assert_called_with(
         self.VIDEO_ID, expected_name,
         description=self.DESCRIPTION,
-        publish_status=videos.VideosClient.PRIVATE)
+        publish_status=expected_publish_status)
+
+  def test_publish_none(self):
+    self.check_publish(None, videos.VideosClient.PRIVATE)
+    self.video_queue_client.push.assert_not_called()
+    self.video_queue_client.insert_front.assert_not_called()
+
+  def test_publish_now(self):
+    self.check_publish(
+        videos_api.PublishRequest.PublishMode.NOW, videos.VideosClient.PUBLIC)
+    self.video_queue_client.push.assert_not_called()
+    self.video_queue_client.insert_front.assert_not_called()
+
+  def test_publish_enqueue(self):
+    self.check_publish(
+        videos_api.PublishRequest.PublishMode.ENQUEUE,
+        videos.VideosClient.PRIVATE)
+    self.video_queue_client.push.assert_called_with(
+        video_queue.Video(
+            id=self.VIDEO_ID,
+            name=videos.VideosClient.get_video_name(self.TITLE, self.SUBTITLE)))
+    self.video_queue_client.insert_front.assert_not_called()
+
+  def test_publish_preempt(self):
+    self.check_publish(
+        videos_api.PublishRequest.PublishMode.PREEMPT,
+        videos.VideosClient.PRIVATE)
+    self.video_queue_client.push.assert_not_called()
+    self.video_queue_client.insert_front.assert_called_with(
+        video_queue.Video(
+            id=self.VIDEO_ID,
+            name=videos.VideosClient.get_video_name(self.TITLE, self.SUBTITLE)))
 
   # Utility functions
 
