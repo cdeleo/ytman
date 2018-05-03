@@ -14,7 +14,7 @@ class VideoQueueClient(object):
   _TAIL_ID = models.EnqueuedVideoPointer.TAIL_ID
 
   def __init__(self):
-    self._videos = None
+    pass
 
   def _get_pointer_key(self, user_id, pointer_id):
     return ndb.Key(

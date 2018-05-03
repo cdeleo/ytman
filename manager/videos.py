@@ -23,6 +23,9 @@ def _provide_youtube_service(credentials=dpy.IN):
 @dpy.Injectable.named('videos_client')
 class VideosClient(object):
 
+  PRIVATE = 'private'
+  PUBLIC = 'public'
+
   def __init__(self):
     pass
 
@@ -33,9 +36,13 @@ class VideosClient(object):
         media_body=MediaIoBaseUpload(
             io.BytesIO(thumbnail_data), mimetype='image/png')).execute()
 
+  @staticmethod
+  def get_video_name(title, subtitle):
+    return '%s - %s' % (title, subtitle)
+
   @dpy.Inject
   def set_metadata(
-      self, video_id, title, subtitle,
+      self, video_id, name,
       description=None, publish_status=None, youtube_service=dpy.IN):
     parts = ['snippet']
     if publish_status:
@@ -45,7 +52,7 @@ class VideosClient(object):
         id=video_id, part=','.join(parts)).execute()
     video = read_response['items'][0]
 
-    video['snippet']['title'] = '%s - %s' % (title, subtitle)
+    video['snippet']['title'] = name
     if description:
       video['snippet']['description'] = description
     if publish_status:

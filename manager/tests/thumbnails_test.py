@@ -18,14 +18,17 @@ class ThumbnailsTest(unittest.TestCase):
     self.service.get().execute.return_value = {
       'image_data': self.IMAGE_DATA,
     }
-    self.client = thumbnails.ThumbnailsClient(thumbnails_service=self.service)
+    self.client = thumbnails.ThumbnailsClient()
 
   def test_get(self):
     self.assertEqual(
-        self.client.get(self.BG_KEY, self.TITLE, self.SUBTITLE), 'octopus')
+        self.client.get(
+            self.BG_KEY, self.TITLE, self.SUBTITLE,
+            thumbnails_service=self.service), 'octopus')
     expected_request = {
       'bg_key': self.BG_KEY,
       'title': self.TITLE,
       'subtitle': self.SUBTITLE,
     }
-    self.service.get.assert_called_with(expected_request)
+    self.service.get.assert_called_with(**expected_request)
+    self.service.get().execute.assert_called_with()

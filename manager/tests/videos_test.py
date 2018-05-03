@@ -12,6 +12,7 @@ class VideosClientTest(unittest.TestCase):
   VIDEO_ID = 'fake_video_id'
   TITLE = 'fake_title'
   SUBTITLE = 'fake_subtitle'
+  NAME = videos.VideosClient.get_video_name(TITLE, SUBTITLE)
   DESCRIPTION = 'fake_description'
   THUMBNAIL_DATA = 'fake_thumbnail_data'
 
@@ -51,28 +52,28 @@ class VideosClientTest(unittest.TestCase):
 
   def test_set_metadata(self):
     self.client.set_metadata(
-        self.VIDEO_ID, self.TITLE, self.SUBTITLE,
-        youtube_service=self.youtube_service)
+        self.VIDEO_ID, self.NAME, youtube_service=self.youtube_service)
     expected_body = copy.deepcopy(self.VIDEO_RESOURCE)
-    expected_body['snippet']['title'] = '%s - %s' % (self.TITLE, self.SUBTITLE)
+    expected_body['snippet']['title'] = self.NAME
     self._check_set_metadata('snippet', expected_body)
 
   def test_set_metadata_description(self):
     self.client.set_metadata(
-        self.VIDEO_ID, self.TITLE, self.SUBTITLE,
+        self.VIDEO_ID, self.NAME,
         description=self.DESCRIPTION, youtube_service=self.youtube_service)
     expected_body = copy.deepcopy(self.VIDEO_RESOURCE)
-    expected_body['snippet']['title'] = '%s - %s' % (self.TITLE, self.SUBTITLE)
+    expected_body['snippet']['title'] = self.NAME
     expected_body['snippet']['description'] = self.DESCRIPTION
     self._check_set_metadata('snippet', expected_body)
 
   def test_set_metadata_publish_status(self):
     self.client.set_metadata(
-        self.VIDEO_ID, self.TITLE, self.SUBTITLE,
-        publish_status='private', youtube_service=self.youtube_service)
+        self.VIDEO_ID, self.NAME,
+        publish_status=self.client.PRIVATE,
+        youtube_service=self.youtube_service)
     expected_body = copy.deepcopy(self.VIDEO_RESOURCE)
-    expected_body['snippet']['title'] = '%s - %s' % (self.TITLE, self.SUBTITLE)
-    expected_body['status']['privacyStatus'] = 'private'
+    expected_body['snippet']['title'] = self.NAME
+    expected_body['status']['privacyStatus'] = self.client.PRIVATE
     self._check_set_metadata('snippet,status', expected_body)
 
 if __name__ == '__main__':

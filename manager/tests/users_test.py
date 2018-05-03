@@ -46,7 +46,7 @@ class UsersTest(unittest.TestCase):
   def test_set_credentials(self):
     self.client.set_credentials(self.CREDENTIALS, user_id=self.USER_ID)
     self.assertEqual(
-        self.client.get_credentials(self.USER_ID).to_json(),
+        self.client.get_credentials(user_id=self.USER_ID).to_json(),
         self.CREDENTIALS.to_json())
 
   def test_exchange_auth_code(self):

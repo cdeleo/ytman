@@ -38,6 +38,9 @@ class VideosApiTest(unittest.TestCase):
     self.thumbnails_client = mock.Mock(thumbnails.ThumbnailsClient)
     self.thumbnails_client.get.return_value = self.THUMBNAIL_DATA
     self.videos_client = mock.Mock(videos.VideosClient)
+    self.videos_client.PRIVATE = videos.VideosClient.PRIVATE
+    self.videos_client.get_video_name.return_value = (
+        videos.VideosClient.get_video_name(self.TITLE, self.SUBTITLE))
 
     @endpoints.api(name='videos', version='v1')
     class _TestVideosApi(videos_api.VideosApi):
@@ -66,9 +69,12 @@ class VideosApiTest(unittest.TestCase):
         self.BG_KEY, self.TITLE, self.SUBTITLE)
     self.videos_client.set_thumbnail.assert_called_with(
         self.VIDEO_ID, self.THUMBNAIL_DATA)
+    expected_name = videos.VideosClient.get_video_name(
+        self.TITLE, self.SUBTITLE)
     self.videos_client.set_metadata.assert_called_with(
-        self.VIDEO_ID, self.TITLE, self.SUBTITLE,
-        description=self.DESCRIPTION, publish_status='private')
+        self.VIDEO_ID, expected_name,
+        description=self.DESCRIPTION,
+        publish_status=videos.VideosClient.PRIVATE)
 
   # Utility functions
 

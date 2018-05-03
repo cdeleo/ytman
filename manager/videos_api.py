@@ -37,7 +37,8 @@ class VideosApi(remote.Service):
     thumbnail_data = self._thumbnails_client.get(
         req.bg_key, req.title, req.subtitle)
     self._videos_client.set_thumbnail(req.video_id, thumbnail_data)
+    video_name = self._videos_client.get_video_name(req.title, req.subtitle)
     self._videos_client.set_metadata(
-        req.video_id, req.title, req.subtitle,
-        description=req.description, publish_status='private')
+        req.video_id, video_name,
+        description=req.description, publish_status=self._videos_client.PRIVATE)
     return PublishResponse()
