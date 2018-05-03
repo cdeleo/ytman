@@ -131,12 +131,44 @@
       },
       "type": "object"
     },
+    "VideosApiEnqueuedVideo": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "VideosApiListQueueResponse": {
+      "properties": {
+        "videos": {
+          "items": {
+            "$ref": "#/definitions/VideosApiEnqueuedVideo"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "VideosApiPublishRequest": {
       "properties": {
         "bg_key": {
           "type": "string"
         },
         "description": {
+          "type": "string"
+        },
+        "publish_mode": {
+          "default": "NONE",
+          "enum": [
+            "NONE",
+            "NOW",
+            "ENQUEUE",
+            "PREEMPT"
+          ],
           "type": "string"
         },
         "subtitle": {
@@ -312,6 +344,20 @@
             "description": "A successful response",
             "schema": {
               "$ref": "#/definitions/UsersApiProvideCredentialsResponse"
+            }
+          }
+        }
+      }
+    },
+    "/ytman/v1/videos/list_queue": {
+      "get": {
+        "operationId": "VideosApi_listQueueHandler",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/VideosApiListQueueResponse"
             }
           }
         }

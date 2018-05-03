@@ -18,4 +18,4 @@ libraries:
 
 env_variables:
   ENDPOINTS_SERVICE_NAME: backend-dot-youtube-manager-196811.appspot.com
-  ENDPOINTS_SERVICE_VERSION: 2018-04-30r0
+  ENDPOINTS_SERVICE_VERSION: 2018-05-03r0
