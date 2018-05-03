@@ -1,0 +1,113 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+
+<dom-module id="ytman-queue">
+  <template>
+    <style include="ytman-style">
+      .thumbnail {
+        width: 90%;
+        vertical-align: middle;
+      }
+    </style>
+
+    <google-signin-aware
+        scopes="https://www.googleapis.com/auth/userinfo.email"
+        is-authorized="{{_isAuthorized}}"></google-signin-aware>
+
+    <google-client-loader
+        app-id="backend-dot-youtube-manager-196811"
+        name="ytman"
+        version="v1"
+        on-google-api-load="_onLoadYtmanApi"></google-client-loader>
+
+    <google-client-loader
+        name="youtube"
+        version="v3"
+        on-google-api-load="_onLoadYoutubeApi"></google-client-loader>
+
+    <div class="input-pane">
+      <paper-listbox>
+        <template is="dom-repeat" items="[[videos]]">
+          <paper-icon-item>
+              <img class="thumbnail" slot="item-icon" src="[[item.thumbnail]]">
+              </img>
+            <paper-item-body>
+              <div>[[item.name]]</div>
+            </paper-item-body>
+          </paper-icon-item>
+        </template>
+      </paper-listbox>
+    </div>
+  </template>
+
+  <script>
+    class YtmanQueue extends Polymer.Element {
+      static get is() { return 'ytman-queue'; }
+      static get properties() {
+        return {
+          videos: Array,
+          _ytmanApiLoaded: Boolean,
+          _youtubeApiLoaded: Boolean,
+        };
+      }
+
+      static get observers() {
+        return [
+          '_onApisLoaded(_ytmanApiLoaded, _youtubeApiLoaded)',
+        ];
+      }
+
+      _onLoadYtmanApi() {
+        this._ytmanApiLoaded = true;
+      }
+
+      _onLoadYoutubeApi() {
+        this._youtubeApiLoaded = true;
+      }
+
+      _onApisLoaded(ytmanApiLoaded, youtubeApiLoaded) {
+        if (!ytmanApiLoaded || !youtubeApiLoaded) {
+          return;
+        }
+
+        gapi.client.ytman.videos.list_queue().then(
+          queue_response => {
+            const youtube_request = {
+              id: queue_response.result.videos.map(video => video.id).join(','),
+              part: 'snippet',
+            };
+            return gapi.client.youtube.videos.list(youtube_request).then(
+              youtube_response => {
+                return {
+                  queue_response: queue_response,
+                  youtube_response: youtube_response,
+                };
+              }
+            )
+          }
+        ).then(
+          result => {
+            const videos = new Map();
+            result.queue_response.result.videos.forEach(
+              video => {
+                videos.set(video.id, video);
+              }
+            );
+            result.youtube_response.result.items.forEach(
+              video => {
+                videos.get(video.id).thumbnail =
+                    video.snippet.thumbnails.default.url;
+              }
+            );
+            this.videos = Array.from(videos.values());
+          }
+        )
+      }
+    }
+
+    window.customElements.define(YtmanQueue.is, YtmanQueue);
+  </script>
+</dom-module>

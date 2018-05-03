@@ -9,6 +9,7 @@
 <link rel="import" href="ytman-auth.html">
 <link rel="import" href="ytman-images.html">
 <link rel="import" href="ytman-style.html">
+<link rel="import" href="ytman-queue.html">
 <link rel="import" href="ytman-videos.html">
 
 <dom-module id="ytman-app">
@@ -66,6 +67,7 @@
         <paper-tabs
             sticky attr-for-selected="key" selected="{{routeData.section}}">
           <paper-tab key="videos">Videos</paper-tab>
+          <paper-tab key="queue">Queue</paper-tab>
           <paper-tab key="images">Images</paper-tab>
           </paper-tabs>
       </app-header>
@@ -76,6 +78,9 @@
             selected="{{routeData.section}}">
           <div key="videos">
             <ytman-videos route="{{subroute}}"></ytman-videos>
+          </div>
+          <div key="queue">
+            <ytman-queue route="{{subroute}}"></ytman-queue>
           </div>
           <div key="images">
             <ytman-images route="{{subroute}}"></ytman-images>
