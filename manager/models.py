@@ -63,3 +63,13 @@ class Image(ndb.Model):
       return
     index_name = cls.get_index_name(cls.get_user_id_from_key(key))
     search.Index(index_name).delete(key.urlsafe())
+
+class EnqueuedVideo(ndb.Model):
+  name = ndb.StringProperty()
+  next_key = ndb.KeyProperty()
+
+class EnqueuedVideoPointer(ndb.Model):
+  video_key = ndb.KeyProperty()
+
+  HEAD_ID = '#head'
+  TAIL_ID = '#tail'
