@@ -73,3 +73,10 @@ class EnqueuedVideoPointer(ndb.Model):
 
   HEAD_ID = '#head'
   TAIL_ID = '#tail'
+
+class QueuePublishStatus(ndb.Model):
+  run_time = ndb.DateTimeProperty()
+  video_id = ndb.StringProperty()
+  done = ndb.BooleanProperty()
+
+  ID = 'queue_publish_status'

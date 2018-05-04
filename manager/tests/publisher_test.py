@@ -1,0 +1,108 @@
+import publisher
+
+import datetime
+import dpy
+import mock
+import unittest
+
+from google.appengine.ext import ndb
+from google.appengine.ext import testbed
+
+import models
+import video_queue
+
+dpy.SetTestMode()
+
+class PublisherTest(unittest.TestCase):
+
+  USER_ID = 'fake_user_id'
+  VIDEO_ID = 'fake_video_id'
+  VIDEO_NAME = 'fake_video_name'
+
+  NOW = datetime.datetime(2020, 1, 1)
+  MINIMUM_RUN_INTERVAL = datetime.timedelta(hours=1)
+
+  def setUp(self):
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_datastore_v3_stub()
+    self.testbed.init_memcache_stub()
+    ndb.get_context().clear_cache()
+
+    self.video_queue_client = mock.Mock()
+    self.video_queue_client.pop.return_value = (
+        video_queue.Video(self.VIDEO_ID, self.VIDEO_NAME))
+    self.publisher = publisher.Publisher(
+        video_queue_client=self.video_queue_client)
+    self.publisher._get_now = mock.Mock()
+    self.publisher._get_now.return_value = self.NOW
+
+  def get_status_key(self):
+    return ndb.Key(
+        models.User, self.USER_ID,
+        models.QueuePublishStatus, models.QueuePublishStatus.ID)
+
+  def set_status(self, run_time, done):
+    models.QueuePublishStatus(
+        key=self.get_status_key(),
+        run_time=run_time,
+        video_id=self.VIDEO_ID,
+        done=done).put()
+
+  def test_promote_video_first(self):
+    self.assertEqual(
+        self.publisher.promote_video(
+            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
+        publisher.Publisher.SUCCESS)
+    status = self.get_status_key().get()
+    self.assertEqual(status.run_time, self.NOW)
+    self.assertEqual(status.video_id, self.VIDEO_ID)
+    self.assertFalse(status.done)
+
+  def test_promote_video_distant(self):
+    previous_run_time = self.NOW - datetime.timedelta(days=1)
+    self.set_status(previous_run_time, True)
+    self.assertEqual(
+        self.publisher.promote_video(
+            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
+        publisher.Publisher.SUCCESS)
+    status = self.get_status_key().get()
+    self.assertEqual(status.run_time, self.NOW)
+    self.assertEqual(status.video_id, self.VIDEO_ID)
+    self.assertFalse(status.done)
+
+  def test_promote_video_distant_failure(self):
+    previous_run_time = self.NOW - datetime.timedelta(days=1)
+    self.set_status(previous_run_time, False)
+    self.assertEqual(
+        self.publisher.promote_video(
+            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
+        publisher.Publisher.PREVIOUS_FAILURE)
+    status = self.get_status_key().get()
+    self.assertEqual(status.run_time, previous_run_time)
+    self.assertEqual(status.video_id, self.VIDEO_ID)
+    self.assertFalse(status.done)
+
+  def test_promote_video_recent(self):
+    previous_run_time = self.NOW - datetime.timedelta(minutes=1)
+    self.set_status(previous_run_time, True)
+    self.assertEqual(
+        self.publisher.promote_video(
+            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
+        publisher.Publisher.TOO_RECENT)
+    status = self.get_status_key().get()
+    self.assertEqual(status.run_time, previous_run_time)
+    self.assertEqual(status.video_id, self.VIDEO_ID)
+    self.assertTrue(status.done)
+
+  def test_promote_video_recent_failure(self):
+    previous_run_time = self.NOW - datetime.timedelta(minutes=1)
+    self.set_status(previous_run_time, False)
+    self.assertEqual(
+        self.publisher.promote_video(
+            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
+        publisher.Publisher.PREVIOUS_FAILURE)
+    status = self.get_status_key().get()
+    self.assertEqual(status.run_time, previous_run_time)
+    self.assertEqual(status.video_id, self.VIDEO_ID)
+    self.assertFalse(status.done)

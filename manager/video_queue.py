@@ -67,20 +67,23 @@ class VideoQueueClient(object):
 
   @dpy.Inject
   def pop(self, user_id=dpy.IN):
-    head_pointer_key = self._get_pointer_key(user_id, self._HEAD_ID)
-    head = self._resolve_pointer(head_pointer_key)
-    if head is None:
-      return None
+    @ndb.transactional
+    def _pop():
+      head_pointer_key = self._get_pointer_key(user_id, self._HEAD_ID)
+      head = self._resolve_pointer(head_pointer_key)
+      if head is None:
+        return None
 
-    head_pointer = self._get_pointer_entity(head_pointer_key, head.next_key)
-    to_put = [head_pointer]
-    if head.next_key is None:
-      tail_pointer = self._get_pointer_entity(
-          self._get_pointer_key(user_id, self._TAIL_ID), None)
-      to_put.append(tail_pointer)
-    ndb.put_multi(to_put)
-    head.key.delete()
-    return Video(id=head.key.id(), name=head.name)
+      head_pointer = self._get_pointer_entity(head_pointer_key, head.next_key)
+      to_put = [head_pointer]
+      if head.next_key is None:
+        tail_pointer = self._get_pointer_entity(
+            self._get_pointer_key(user_id, self._TAIL_ID), None)
+        to_put.append(tail_pointer)
+      ndb.put_multi(to_put)
+      head.key.delete()
+      return Video(id=head.key.id(), name=head.name)
+    return _pop()
 
   @dpy.Inject
   def insert_front(self, video, user_id=dpy.IN):
