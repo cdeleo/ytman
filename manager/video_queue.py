@@ -140,21 +140,37 @@ class VideoQueueClient(object):
     del videos[index]
     return to_put
 
+  def _find_video(self, videos, video_id):
+    for index in xrange(len(videos)):
+      if videos[index].key.id() == video_id:
+        return index
+    raise Exception('Video %s not enqueued.' % video_id)
+
   @dpy.Inject
   def move(self, video_id, dst_index, user_id=dpy.IN):
-    videos = self._get_videos(user_id)
-    if len(videos) <= dst_index:
-      raise Exception('Only %d videos enqueued.' % len(videos))
-    for src_index in xrange(len(videos)):
-      if videos[src_index].key.id() == video_id:
-        break
-    else:
-      raise Exception('Video %s not enqueued.' % video_id)
-    if src_index == dst_index:
-      return
+    @ndb.transactional
+    def _move():
+      videos = self._get_videos(user_id)
+      if len(videos) <= dst_index:
+        raise Exception('Only %d videos enqueued.' % len(videos))
+      src_index = self._find_video(videos, video_id)
+      if src_index == dst_index:
+        return
 
-    to_put = []
-    video = videos[src_index]
-    to_put.extend(self._remove_at(user_id, videos, src_index))
-    to_put.extend(self._insert_at(user_id, videos, dst_index, video))
-    ndb.put_multi(to_put)
+      to_put = []
+      video = videos[src_index]
+      to_put.extend(self._remove_at(user_id, videos, src_index))
+      to_put.extend(self._insert_at(user_id, videos, dst_index, video))
+      ndb.put_multi(to_put)
+    _move()
+
+  @dpy.Inject
+  def delete(self, video_id, user_id=dpy.IN):
+    @ndb.transactional
+    def _delete():
+      videos = self._get_videos(user_id)
+      index = self._find_video(videos, video_id)
+      video = videos[index]
+      ndb.put_multi(self._remove_at(user_id, videos, index))
+      video.key.delete()
+    _delete()

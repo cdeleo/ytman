@@ -100,5 +100,20 @@ class VideoQueueClientTest(unittest.TestCase):
     self.client.insert_front(self.QUETZAL, user_id=self.USER_ID)
     self.assert_queue([self.QUETZAL])
 
+  def test_delete(self):
+    self.client.push(self.QUETZAL, user_id=self.USER_ID)
+    self.client.delete(self.PANGOLIN.id, user_id=self.USER_ID)
+    self.assert_queue([self.OCTOPUS, self.QUETZAL])
+
+  def test_delete_head(self):
+    self.client.push(self.QUETZAL, user_id=self.USER_ID)
+    self.client.delete(self.OCTOPUS.id, user_id=self.USER_ID)
+    self.assert_queue([self.PANGOLIN, self.QUETZAL])
+
+  def test_delete_tail(self):
+    self.client.push(self.QUETZAL, user_id=self.USER_ID)
+    self.client.delete(self.QUETZAL.id, user_id=self.USER_ID)
+    self.assert_queue([self.OCTOPUS, self.PANGOLIN])
+
 if __name__ == '__main__':
     unittest.main()
