@@ -52,15 +52,17 @@ class VideosClientTest(unittest.TestCase):
 
   def test_set_metadata(self):
     self.client.set_metadata(
-        self.VIDEO_ID, self.NAME, youtube_service=self.youtube_service)
+        self.VIDEO_ID, title=self.NAME, youtube_service=self.youtube_service)
     expected_body = copy.deepcopy(self.VIDEO_RESOURCE)
     expected_body['snippet']['title'] = self.NAME
     self._check_set_metadata('snippet', expected_body)
 
   def test_set_metadata_description(self):
     self.client.set_metadata(
-        self.VIDEO_ID, self.NAME,
-        description=self.DESCRIPTION, youtube_service=self.youtube_service)
+        self.VIDEO_ID,
+        title=self.NAME,
+        description=self.DESCRIPTION,
+        youtube_service=self.youtube_service)
     expected_body = copy.deepcopy(self.VIDEO_RESOURCE)
     expected_body['snippet']['title'] = self.NAME
     expected_body['snippet']['description'] = self.DESCRIPTION
@@ -68,13 +70,20 @@ class VideosClientTest(unittest.TestCase):
 
   def test_set_metadata_publish_status(self):
     self.client.set_metadata(
-        self.VIDEO_ID, self.NAME,
+        self.VIDEO_ID,
+        title=self.NAME,
         publish_status=self.client.PRIVATE,
         youtube_service=self.youtube_service)
     expected_body = copy.deepcopy(self.VIDEO_RESOURCE)
     expected_body['snippet']['title'] = self.NAME
     expected_body['status']['privacyStatus'] = self.client.PRIVATE
     self._check_set_metadata('snippet,status', expected_body)
+
+  def test_set_metadata_none(self):
+    self.client.set_metadata(
+        self.VIDEO_ID, youtube_service=self.youtube_service)
+    self.youtube_service.videos().list().execute.assert_not_called()
+    self.youtube_service.videos().update().execute.assert_not_called()
 
 if __name__ == '__main__':
   unittest.main()

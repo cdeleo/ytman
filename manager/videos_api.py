@@ -66,8 +66,10 @@ class VideosApi(remote.Service):
         if req.publish_mode == PublishRequest.PublishMode.NOW
         else self._videos_client.PRIVATE)
     self._videos_client.set_metadata(
-        req.video_id, video_name,
-        description=req.description, publish_status=publish_status)
+        req.video_id,
+        title=video_name,
+        description=req.description,
+        publish_status=publish_status)
 
     video = video_queue.Video(id=req.video_id, name=video_name)
     if req.publish_mode == PublishRequest.PublishMode.ENQUEUE:

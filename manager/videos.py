@@ -25,6 +25,7 @@ class VideosClient(object):
 
   PRIVATE = 'private'
   PUBLIC = 'public'
+  UNLISTED = 'unlisted'
 
   def __init__(self):
     pass
@@ -42,17 +43,22 @@ class VideosClient(object):
 
   @dpy.Inject
   def set_metadata(
-      self, video_id, name,
-      description=None, publish_status=None, youtube_service=dpy.IN):
-    parts = ['snippet']
+      self, video_id, title=None, description=None, publish_status=None,
+      youtube_service=dpy.IN):
+    parts = []
+    if title or description:
+      parts.append('snippet')
     if publish_status:
       parts.append('status')
+    if not parts:
+      return
 
     read_response = youtube_service.videos().list(
         id=video_id, part=','.join(parts)).execute()
     video = read_response['items'][0]
 
-    video['snippet']['title'] = name
+    if title:
+      video['snippet']['title'] = title
     if description:
       video['snippet']['description'] = description
     if publish_status:

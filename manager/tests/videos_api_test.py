@@ -80,7 +80,8 @@ class VideosApiTest(unittest.TestCase):
     expected_name = videos.VideosClient.get_video_name(
         self.TITLE, self.SUBTITLE)
     self.videos_client.set_metadata.assert_called_with(
-        self.VIDEO_ID, expected_name,
+        self.VIDEO_ID,
+        title=expected_name,
         description=self.DESCRIPTION,
         publish_status=expected_publish_status)
 
