@@ -50,10 +50,9 @@ class PublisherTest(unittest.TestCase):
         done=done).put()
 
   def test_promote_video_first(self):
-    self.assertEqual(
-        self.publisher.promote_video(
-            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
-        publisher.Publisher.SUCCESS)
+    result, status = self.publisher.promote_video(
+        self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID)
+    self.assertEqual(result, publisher.Publisher.SUCCESS)
     status = self.get_status_key().get()
     self.assertEqual(status.run_time, self.NOW)
     self.assertEqual(status.video_id, self.VIDEO_ID)
@@ -62,10 +61,9 @@ class PublisherTest(unittest.TestCase):
   def test_promote_video_distant(self):
     previous_run_time = self.NOW - datetime.timedelta(days=1)
     self.set_status(previous_run_time, True)
-    self.assertEqual(
-        self.publisher.promote_video(
-            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
-        publisher.Publisher.SUCCESS)
+    result, status = self.publisher.promote_video(
+        self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID)
+    self.assertEqual(result, publisher.Publisher.SUCCESS)
     status = self.get_status_key().get()
     self.assertEqual(status.run_time, self.NOW)
     self.assertEqual(status.video_id, self.VIDEO_ID)
@@ -74,10 +72,9 @@ class PublisherTest(unittest.TestCase):
   def test_promote_video_distant_failure(self):
     previous_run_time = self.NOW - datetime.timedelta(days=1)
     self.set_status(previous_run_time, False)
-    self.assertEqual(
-        self.publisher.promote_video(
-            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
-        publisher.Publisher.PREVIOUS_FAILURE)
+    result, status = self.publisher.promote_video(
+        self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID)
+    self.assertEqual(result, publisher.Publisher.PREVIOUS_FAILURE)
     status = self.get_status_key().get()
     self.assertEqual(status.run_time, previous_run_time)
     self.assertEqual(status.video_id, self.VIDEO_ID)
@@ -86,10 +83,9 @@ class PublisherTest(unittest.TestCase):
   def test_promote_video_recent(self):
     previous_run_time = self.NOW - datetime.timedelta(minutes=1)
     self.set_status(previous_run_time, True)
-    self.assertEqual(
-        self.publisher.promote_video(
-            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
-        publisher.Publisher.TOO_RECENT)
+    result, status = self.publisher.promote_video(
+        self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID)
+    self.assertEqual(result, publisher.Publisher.TOO_RECENT)
     status = self.get_status_key().get()
     self.assertEqual(status.run_time, previous_run_time)
     self.assertEqual(status.video_id, self.VIDEO_ID)
@@ -98,10 +94,9 @@ class PublisherTest(unittest.TestCase):
   def test_promote_video_recent_failure(self):
     previous_run_time = self.NOW - datetime.timedelta(minutes=1)
     self.set_status(previous_run_time, False)
-    self.assertEqual(
-        self.publisher.promote_video(
-            self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID),
-        publisher.Publisher.PREVIOUS_FAILURE)
+    result, status = self.publisher.promote_video(
+        self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID)
+    self.assertEqual(result, publisher.Publisher.PREVIOUS_FAILURE)
     status = self.get_status_key().get()
     self.assertEqual(status.run_time, previous_run_time)
     self.assertEqual(status.video_id, self.VIDEO_ID)

@@ -30,17 +30,18 @@ class Publisher(object):
       status = self._get_status_key(user_id).get()
       if status:
         if not status.done:
-          return self.PREVIOUS_FAILURE
+          return self.PREVIOUS_FAILURE, status
         else:
           delta = self._get_now() - status.run_time
           if delta < minimum_run_interval:
-            return self.TOO_RECENT
+            return self.TOO_RECENT, status
 
       video = self._video_queue_client.pop()
-      models.QueuePublishStatus(
+      new_status = models.QueuePublishStatus(
           key=self._get_status_key(user_id),
           run_time=self._get_now(),
           video_id=video.id,
-          done=False).put()
-      return self.SUCCESS
+          done=False)
+      new_status.put()
+      return self.SUCCESS, new_status
     return _promote_video()
