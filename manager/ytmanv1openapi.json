@@ -131,7 +131,11 @@
       },
       "type": "object"
     },
-    "VideosApiEnqueuedVideo": {
+    "VideoQueueApiDeleteResponse": {
+      "properties": {},
+      "type": "object"
+    },
+    "VideoQueueApiEnqueuedVideo": {
       "properties": {
         "id": {
           "type": "string"
@@ -142,11 +146,11 @@
       },
       "type": "object"
     },
-    "VideosApiListQueueResponse": {
+    "VideoQueueApiListResponse": {
       "properties": {
         "videos": {
           "items": {
-            "$ref": "#/definitions/VideosApiEnqueuedVideo"
+            "$ref": "#/definitions/VideoQueueApiEnqueuedVideo"
           },
           "type": "array"
         }
@@ -349,15 +353,36 @@
         }
       }
     },
-    "/ytman/v1/videos/list_queue": {
+    "/ytman/v1/video_queue/list": {
       "get": {
-        "operationId": "VideosApi_listQueueHandler",
+        "operationId": "VideoQueueApi_listHandler",
         "parameters": [],
         "responses": {
           "200": {
             "description": "A successful response",
             "schema": {
-              "$ref": "#/definitions/VideosApiListQueueResponse"
+              "$ref": "#/definitions/VideoQueueApiListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/ytman/v1/video_queue/{id}": {
+      "delete": {
+        "operationId": "VideoQueueApi_deleteHandler",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/VideoQueueApiDeleteResponse"
             }
           }
         }

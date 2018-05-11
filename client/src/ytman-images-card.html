@@ -5,11 +5,12 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="ytman-images-list-loader.html">
+<link rel="import" href="ytman-style.html">
 
 <dom-module id="ytman-images-card">
   <template>
     <style include="iron-flex iron-flex-alignment"></style>
-    <style>
+    <style include="ytman-style">
       paper-card {
         width: 250px;
         margin: 10px;
@@ -23,14 +24,6 @@
 
       .title {
         font-size: 16px;
-      }
-
-      .delete {
-        color: lightgray;
-      }
-
-      .delete:hover {
-        color: black;
       }
 
       [invisible] {

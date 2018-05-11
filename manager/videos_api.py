@@ -26,16 +26,6 @@ class PublishRequest(messages.Message):
 class PublishResponse(messages.Message):
   pass
 
-class ListQueueRequest(messages.Message):
-  pass
-
-class EnqueuedVideo(messages.Message):
-  id = messages.StringField(1)
-  name = messages.StringField(2)
-
-class ListQueueResponse(messages.Message):
-  videos = messages.MessageField(EnqueuedVideo, 1, repeated=True)
-
 @dpy.Inject
 class VideosApi(remote.Service):
 
@@ -78,15 +68,3 @@ class VideosApi(remote.Service):
       self._video_queue_client.insert_front(video)
 
     return PublishResponse()
-
-  @endpoints.method(
-      ListQueueRequest,
-      ListQueueResponse,
-      path='list_queue',
-      http_method='GET',
-      name='list_queue')
-  @auth.require_auth
-  def list_queue_handler(self, req):
-    videos = [EnqueuedVideo(id=v.id, name=v.name)
-              for v in self._video_queue_client.list()]
-    return ListQueueResponse(videos=videos)

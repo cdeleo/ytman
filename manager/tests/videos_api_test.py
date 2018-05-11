@@ -116,19 +116,6 @@ class VideosApiTest(unittest.TestCase):
             id=self.VIDEO_ID,
             name=videos.VideosClient.get_video_name(self.TITLE, self.SUBTITLE)))
 
-  def test_list_queue(self):
-    expected_videos = [
-      video_queue.Video('video id 0', 'video name 0'),
-      video_queue.Video('video id 1', 'video name 1'),
-    ]
-    self.video_queue_client.list.return_value = expected_videos
-
-    resp = self.app.get(self.API_PREFIX + '/list_queue')
-    self.assertEqual(self.get_status_code(resp), 200)
-    for video, expected_video in zip(resp.json['videos'], expected_videos):
-      self.assertEqual(video['id'], expected_video.id)
-      self.assertEqual(video['name'], expected_video.name)
-
   # Utility functions
 
   def get_status_code(self, resp):

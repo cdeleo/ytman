@@ -1,11 +1,16 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/google-apis/google-client-loader.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="ytman-style.html">
 
 <dom-module id="ytman-queue">
   <template>
+    <style include="iron-flex iron-flex-alignment"></style>
     <style include="ytman-style">
       .thumbnail {
         width: 90%;
@@ -31,13 +36,19 @@
     <div class="input-pane">
       <paper-listbox>
         <template is="dom-repeat" items="[[videos]]">
-          <paper-icon-item>
-              <img class="thumbnail" slot="item-icon" src="[[item.thumbnail]]">
-              </img>
-            <paper-item-body>
-              <div>[[item.name]]</div>
-            </paper-item-body>
-          </paper-icon-item>
+          <div class="layout horizontal center">
+            <paper-icon-button
+                class="delete"
+                icon="delete"
+                on-click="_onDelete"></paper-icon-button>
+            <paper-icon-item>
+                <img class="thumbnail"
+                    slot="item-icon" src="[[item.thumbnail]]"></img>
+              <paper-item-body>
+                <div>[[item.name]]</div>
+              </paper-item-body>
+            </paper-icon-item>
+          </div>
         </template>
       </paper-listbox>
     </div>
@@ -68,13 +79,13 @@
         this._youtubeApiLoaded = true;
       }
 
-      _onApisLoaded(ytmanApiLoaded, youtubeApiLoaded) {
-        if (!ytmanApiLoaded || !youtubeApiLoaded) {
-          return;
-        }
-
-        gapi.client.ytman.videos.list_queue().then(
+      _reload() {
+        gapi.client.ytman.video_queue.list().then(
           queue_response => {
+            if (!queue_response.result.videos) {
+              this.videos = [];
+              return null;
+            }
             const youtube_request = {
               id: queue_response.result.videos.map(video => video.id).join(','),
               part: 'snippet',
@@ -90,6 +101,9 @@
           }
         ).then(
           result => {
+            if (!result) {
+              return;
+            }
             const videos = new Map();
             result.queue_response.result.videos.forEach(
               video => {
@@ -103,6 +117,21 @@
               }
             );
             this.videos = Array.from(videos.values());
+          }
+        );
+      }
+
+      _onApisLoaded(ytmanApiLoaded, youtubeApiLoaded) {
+        if (!ytmanApiLoaded || !youtubeApiLoaded) {
+          return;
+        }
+        this._reload();
+      }
+
+      _onDelete(event) {
+        gapi.client.ytman.video_queue.delete({id: event.model.item.id}).then(
+          response => {
+            this._reload();
           }
         )
       }
