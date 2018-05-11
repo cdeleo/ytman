@@ -101,3 +101,34 @@ class PublisherTest(unittest.TestCase):
     self.assertEqual(status.run_time, previous_run_time)
     self.assertEqual(status.video_id, self.VIDEO_ID)
     self.assertFalse(status.done)
+
+  def test_promote_video_queue_empty(self):
+    previous_run_time = self.NOW - datetime.timedelta(days=1)
+    self.set_status(previous_run_time, True)
+    self.video_queue_client.pop.return_value = None
+    result, status = self.publisher.promote_video(
+        self.MINIMUM_RUN_INTERVAL, user_id=self.USER_ID)
+    self.assertEqual(result, publisher.Publisher.QUEUE_EMPTY)
+
+  def test_finish_video(self):
+    self.set_status(self.NOW, False)
+    self.assertTrue(
+        self.publisher.finish_video(self.VIDEO_ID, user_id=self.USER_ID))
+    status = self.get_status_key().get()
+    self.assertEqual(status.video_id, self.VIDEO_ID)
+    self.assertTrue(status.done)
+
+  def test_finish_video_already_done(self):
+    self.set_status(self.NOW, True)
+    self.assertFalse(
+        self.publisher.finish_video(
+            self.VIDEO_ID + '_old', user_id=self.USER_ID))
+
+  def test_finish_video_wrong_video(self):
+    self.set_status(self.NOW, True)
+    self.assertFalse(
+        self.publisher.finish_video(
+            self.VIDEO_ID + '_old', user_id=self.USER_ID))
+
+if __name__ == '__main__':
+    unittest.main()
