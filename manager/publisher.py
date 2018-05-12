@@ -4,6 +4,8 @@ import dpy
 from google.appengine.ext import ndb
 
 import models
+import video_queue
+import videos
 
 @dpy.Injectable.named('publisher')
 class Publisher(object):
@@ -13,8 +15,9 @@ class Publisher(object):
   PREVIOUS_FAILURE = 2
   QUEUE_EMPTY = 3
 
-  def __init__(self, video_queue_client=dpy.IN):
+  def __init__(self, video_queue_client=dpy.IN, videos_client=dpy.IN):
     self._video_queue_client = video_queue_client
+    self._videos_client = videos_client
 
   def _get_status_key(self, user_id):
     return ndb.Key(
@@ -59,4 +62,6 @@ class Publisher(object):
       current_status.done = True
       current_status.put()
       return True
+    self._videos_client.set_metadata(
+        video_id, publish_status=self._videos_client.PUBLIC)
     return _finish_video()

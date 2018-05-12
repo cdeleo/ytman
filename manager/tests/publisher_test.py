@@ -10,6 +10,7 @@ from google.appengine.ext import testbed
 
 import models
 import video_queue
+import videos
 
 dpy.SetTestMode()
 
@@ -32,8 +33,10 @@ class PublisherTest(unittest.TestCase):
     self.video_queue_client = mock.Mock()
     self.video_queue_client.pop.return_value = (
         video_queue.Video(self.VIDEO_ID, self.VIDEO_NAME))
+    self.videos_client = mock.Mock()
     self.publisher = publisher.Publisher(
-        video_queue_client=self.video_queue_client)
+        video_queue_client=self.video_queue_client,
+        videos_client=self.videos_client)
     self.publisher._get_now = mock.Mock()
     self.publisher._get_now.return_value = self.NOW
 
@@ -117,18 +120,24 @@ class PublisherTest(unittest.TestCase):
     status = self.get_status_key().get()
     self.assertEqual(status.video_id, self.VIDEO_ID)
     self.assertTrue(status.done)
+    self.videos_client.set_metadata.ssert_called_with(
+        self.VIDEO_ID, publish_status=videos.VideosClient.PUBLIC)
 
   def test_finish_video_already_done(self):
     self.set_status(self.NOW, True)
     self.assertFalse(
         self.publisher.finish_video(
             self.VIDEO_ID + '_old', user_id=self.USER_ID))
+    self.videos_client.set_metadata.ssert_called_with(
+        self.VIDEO_ID, publish_status=videos.VideosClient.PUBLIC)
 
   def test_finish_video_wrong_video(self):
     self.set_status(self.NOW, True)
     self.assertFalse(
         self.publisher.finish_video(
             self.VIDEO_ID + '_old', user_id=self.USER_ID))
+    self.videos_client.set_metadata.ssert_called_with(
+        self.VIDEO_ID, publish_status=videos.VideosClient.PUBLIC)
 
 if __name__ == '__main__':
     unittest.main()

@@ -9,6 +9,8 @@ builtins:
 handlers:
 - url: /_ah/api/.*
   script: main.api
+- url: /cron/.*
+  script: cron.app
 
 libraries:
 - name: pycrypto
