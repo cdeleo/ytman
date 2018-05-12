@@ -1,0 +1,5 @@
+cron:
+- description: "daily publish job"
+  url: /cron/publish
+  target: backend
+  schedule: every mon,wed,fri 06:00

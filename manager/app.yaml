@@ -11,6 +11,7 @@ handlers:
   script: main.api
 - url: /cron/.*
   script: cron.app
+  login: admin
 
 libraries:
 - name: pycrypto
