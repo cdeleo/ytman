@@ -42,10 +42,10 @@
 
     <paper-card
         image="[[item.url]]"
-        placeholder-image=[[placeholderImage]]
-        preload-image=true
+        placeholder-image="[[placeholderImage]]"
         selectable$="[[allowSelect]]"
-        on-click="_onSelect">
+        on-click="_onSelect"
+        preload-image>
       <div class="card-content layout horizontal center">
         <span class="title">[[item.name]]</span>
         <span class="flex"></span>
