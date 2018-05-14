@@ -6,6 +6,7 @@
     <google-signin-aware
         id="signin"
         scopes="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.force-ssl"
+        is-authorized="{{_isAuthorized}}"
         on-google-signin-offline-success="_onOfflineSuccess"></google-signin-aware>
 
     <google-client-loader
@@ -19,16 +20,29 @@
     class YtmanAuth extends Polymer.Element {
       static get is() { return 'ytman-auth'; }
       static get properties() {
-        return {};
+        return {
+          _apiLoaded: {
+            type: Boolean,
+            value: false,
+          }
+        };
       }
 
       static get observers() {
         return [
-          '_sendOfflineAuth(_apiLoaded, _offlineResponse)',
+          '_verifyCredentials(_isAuthorized, _apiLoaded)'
         ];
       }
 
       _onLoadApi() {
+        this._apiLoaded = true;
+      }
+
+      _verifyCredentials(isAuthorized, apiLoaded) {
+        if (!isAuthorized || !apiLoaded) {
+          return;
+        }
+
         gapi.client.ytman.users.verify_credentials().then(
           response => {
             if (!response.result.has_credentials) {

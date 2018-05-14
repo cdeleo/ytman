@@ -67,7 +67,7 @@
 
       static get observers() {
         return [
-          '_onApisLoaded(_ytmanApiLoaded, _youtubeApiLoaded)',
+          '_checkReady(_isAuthorized, _ytmanApiLoaded, _youtubeApiLoaded)',
         ];
       }
 
@@ -121,8 +121,8 @@
         );
       }
 
-      _onApisLoaded(ytmanApiLoaded, youtubeApiLoaded) {
-        if (!ytmanApiLoaded || !youtubeApiLoaded) {
+      _checkReady(isAuthorized, ytmanApiLoaded, youtubeApiLoaded) {
+        if (!isAuthorized || !ytmanApiLoaded || !youtubeApiLoaded) {
           return;
         }
         this._reload();
