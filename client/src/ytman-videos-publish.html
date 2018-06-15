@@ -46,6 +46,11 @@
         name="ytman"
         version="v1"></google-client-loader>
 
+    <google-client-loader
+        app-id="thumbnails-dot-youtube-manager-196811"
+        name="thumbnails"
+        version="v1"></google-client-loader>
+
     <div class="input-pane">
       <paper-icon-button
           icon="arrow-back" on-click="_goBack"></paper-icon-button>
@@ -97,6 +102,9 @@
               raised
               disabled=[[!_isPublishEnabled]]
               on-click="_onPreemptClick">Preempt</paper-button>
+          <paper-button
+              disabled=[[!_isPublishEnabled]]
+              on-click="_onDownloadClick">Download thumbnail</paper-button>
         </form>
       </iron-form>
     </div>
@@ -214,6 +222,59 @@
 
       _onPreemptClick() {
         this._publish(4); // PREEMPT
+      }
+
+      // Adapted from https://stackoverflow.com/a/29939024
+      _base64ToBlob(base64, mimetype, slicesize) {
+        if (!window.atob || !window.Uint8Array) {
+          // The current browser doesn't have the atob function.
+          return null;
+        }
+        mimetype = mimetype || '';
+        slicesize = slicesize || 512;
+
+        base64 = base64.replace(
+            new RegExp('-', 'g'), '+').replace(new RegExp('_', 'g'), '/');
+
+        const bytechars = atob(base64);
+        const bytearrays = [];
+        for (let offset = 0; offset < bytechars.length; offset += slicesize) {
+          const slice = bytechars.slice(offset, offset + slicesize);
+          const bytenums = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            bytenums[i] = slice.charCodeAt(i);
+          }
+          const bytearray = new Uint8Array(bytenums);
+          bytearrays[bytearrays.length] = bytearray;
+        }
+        return new Blob(bytearrays, {type: mimetype});
+      };
+
+      _startDownload(url) {
+        const e = document.createElement('a');
+        e.setAttribute('href', url);
+        e.setAttribute('download', 'thumbnail.png');
+        e.style.display = 'none';
+        document.body.appendChild(e);
+        e.click();
+        document.body.removeChild(e);
+      }
+
+      _onDownloadClick() {
+        const request = {
+          bg_key: this._bgKey,
+          title: this.title,
+          subtitle: this.subtitle,
+        }
+        gapi.client.thumbnails.get(request).then(
+          response => {
+            const blob = this._base64ToBlob(
+                response.result.image_data, 'image/png');
+            const blobUrl = window.URL.createObjectURL(blob);
+            this._startDownload(blobUrl);
+            window.URL.revokeObjectURL(blobUrl);
+          }
+        )
       }
     }
 
