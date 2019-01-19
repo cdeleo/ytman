@@ -86,7 +86,7 @@
       }
 
       _getHasNext(buffer, startIndex, pageSize, finished) {
-        return !finished || (startIndex + pageSize) < buffer.length;
+        return buffer && (!finished || (startIndex + pageSize) < buffer.length);
       }
 
       _maybeUpdate() {
