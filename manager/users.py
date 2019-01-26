@@ -12,10 +12,11 @@ class _OAuth2AuthCodeExchanger(object):
   def __init__(self):
     pass
 
+  @dpy.Inject
   def exchange(
-      self, client_secret, auth_code, web_client_id=dpy.IN, scopes=dpy.IN):
+      self, client_secret, auth_code, client_id=dpy.IN, scopes=dpy.IN):
     return oauth2client.credentials_from_code(
-        web_client_id, client_secret, scopes, auth_code)
+        client_id, client_secret, scopes, auth_code)
 
 @dpy.Injectable.named('users_client')
 class UsersClient(object):
