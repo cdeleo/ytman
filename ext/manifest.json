@@ -3,11 +3,23 @@
   "version": "1.0",
   "description": "YouTube video management extensions.",
   "manifest_version": 2,
-
-  "content_scripts": [
-    {
-      "matches": ["https://studio.youtube.com/video/*"],
-      "js": ["ytman-ext.js"]
-    }
-  ]
+  "key": "fgjofdekmjkcodkpadadahohaalfneol",
+  
+  "permissions": [
+    "activeTab",
+    "declarativeContent",
+    "identity"
+  ],
+  "oauth2": {
+    "client_id": "955262123852-cl81aebbrpqjm200e0kg9g1leo7ftv3u.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+  },
+  "background": {
+    "scripts": ["src/background.js"],
+    "persistent": false
+  },
+  "page_action": {
+    "default_title": "ytman",
+    "default_popup": "popup.html"
+  }
 }
