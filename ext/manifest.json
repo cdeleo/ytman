@@ -3,7 +3,7 @@
   "version": "1.0",
   "description": "YouTube video management extensions.",
   "manifest_version": 2,
-  "key": "fgjofdekmjkcodkpadadahohaalfneol",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqLB18X2CeCVkVxgqW1C9aMAOvrSRdaK9KWrRXQHt8yZtRhSJVqW68/zY7jQIwPvp5+WNW2pQss76fvJesYsoYAhd/a68/IzQ6B2mRGlcP/Dg2dim3deOq5+m1cX5IurU3aZGP7Y6ryKtVfRr7reRMzqEjgu9o2C1H5kEj33RyKC/43UTapbigBvyPi+0vIYHAxFPjSXzDHwkjSAUWmqANPQH98Q+wT8it8SVFz5xFiVIGduRMfavn4B8KWGsTOJUtStpd/k0fyt1Y59ei0umbNGgW0L5Mro4faS1nc/K0pNX35j/cD8HNNnSQ7YRiDAw28wsBil3FfQqlqbfaexepQIDAQAB",
   
   "permissions": [
     "activeTab",
@@ -21,5 +21,9 @@
   "page_action": {
     "default_title": "ytman",
     "default_popup": "popup.html"
+  },
+  "web_accessible_resources": ["src/injected.js"],
+  "externally_connectable": {
+    "matches": ["https://studio.youtube.com/video/*"]
   }
 }

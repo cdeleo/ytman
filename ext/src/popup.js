@@ -1,27 +1,37 @@
-// const APP_ID = 'backend-dot-youtube-manager-196811';
+const THUMBNAILS_APP_ID = 'thumbnails-dot-youtube-manager-196811';
+const BG_KEY = 'ahhifnlvdXR1YmUtbWFuYWdlci0xOTY4MTFyLAsSBFVzZXIiFTEwNDU5MzMwNzY2MDA0NTU1OTQxNAwLEgVJbWFnZRiRi0AM';
 
-// function apiUrl(appId, api, version, method) {
-//   return `https://${appId}.appspot.com/_ah/api/${api}/${version}/${method}`;
-// }
+let port = null;
 
-// chrome.identity.getAuthToken({interactive: true}, (token) => {
-//   console.log(token);
-//   fetch(
-//       apiUrl(APP_ID, 'ytman', 'v1', 'images/list'),
-//       {headers: {Authorization: 'Bearer ' + token}}).then((response) => {
-//     response.json().then(data => {
-//       const listContainer = document.querySelector('#image-list');
-//       data.images.forEach(image => {
-//         const imageItem = document.createElement('li');
-//         imageItem.innerText = image.name;
-//         listContainer.appendChild(imageItem);
-//       });
-//     });
-//   });
-// });
+function apiUrl(appId, api, version, method) {
+  return `https://${appId}.appspot.com/_ah/api/${api}/${version}/${method}`;
+}
+
+function getThumbnail(bgKey, title, subtitle, callback) {
+  chrome.identity.getAuthToken({interactive: true}, token => {
+    const params = new URLSearchParams({
+      bg_key: bgKey,
+      title: title,
+      subtitle: subtitle
+    });
+    fetch(
+        apiUrl(THUMBNAILS_APP_ID, 'thumbnails', 'v1', 'get') + '?' + params.toString(),
+        {headers: {Authorization: 'Bearer ' + token}})
+      .then(res => res.json())
+      .then(data => callback(data.image_data));
+  });
+}
 
 function loadData(data) {
   document.querySelector('#title').innerText = data.title;
+}
+
+function handleDone() {
+  if (port) {
+    getThumbnail(BG_KEY, 'title', 'subtitle', data => {
+      port.postMessage(data);
+    });
+  }
 }
 
 chrome.runtime.onMessage.addListener(
@@ -33,5 +43,8 @@ chrome.runtime.onMessage.addListener(
     }
   }
 );
-console.log('listening');
-chrome.tabs.executeScript({file: 'src/injected.js'});
+
+chrome.runtime.onConnectExternal.addListener(p => port = p);
+document.querySelector('#done').addEventListener('click', handleDone);
+
+chrome.tabs.executeScript({file: 'src/content-script.js'});
