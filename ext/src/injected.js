@@ -33,9 +33,8 @@ function connectToExt() {
   port.onMessage.addListener(message => {
     const thumbnailBlob = base64ToBlob(message, 'image/png');
     const fileInput = document.querySelector('#file-loader');
-    fileInput.onclick = e => e.preventDefault();
     Object.defineProperty(
-      fileInput, 'files', {get: () => [thumbnailBlob]});
+      fileInput, 'files', {get: () => [thumbnailBlob], configurable: true});
     fileInput.dispatchEvent(new Event('change'));
   });
 }

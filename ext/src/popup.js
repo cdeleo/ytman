@@ -1,6 +1,8 @@
 const THUMBNAILS_APP_ID = 'thumbnails-dot-youtube-manager-196811';
 const BG_KEY = 'ahhifnlvdXR1YmUtbWFuYWdlci0xOTY4MTFyLAsSBFVzZXIiFTEwNDU5MzMwNzY2MDA0NTU1OTQxNAwLEgVJbWFnZRiRi0AM';
 
+const e = React.createElement;
+
 let port = null;
 
 function apiUrl(appId, api, version, method) {
@@ -34,17 +36,6 @@ function handleDone() {
   }
 }
 
-chrome.runtime.onMessage.addListener(
-  request => {
-    switch (request.type) {
-      case 'LOAD_DATA':
-        loadData(request.data);
-        break;
-    }
-  }
-);
-
 chrome.runtime.onConnectExternal.addListener(p => port = p);
-document.querySelector('#done').addEventListener('click', handleDone);
-
 chrome.tabs.executeScript({file: 'src/content-script.js'});
+ReactDOM.render(e(ThumbnailCreator), document.querySelector('#thumbnail-creator'));

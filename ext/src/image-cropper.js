@@ -70,10 +70,12 @@ class ImageCropper extends React.Component {
   }
   
   render() {
+    console.log('render');
     const height = this.props.image ? this.imageScale * this.props.image.height + 2 * PADDING : 0;
     return e('div', null,
       e('canvas', {
         ref: this.canvas,
+        className: this.props.classes ? this.props.classes.root : '',
         width: this.props.width,
         height: height,
         onMouseDown: e => this.handleMouseDown(e),
@@ -86,14 +88,15 @@ class ImageCropper extends React.Component {
   }
   
   componentDidMount() {
-    this.c = this.canvas.current.getContext('2d');
-  }
-  
-  componentDidUpdate() {
     if (this.props.image && !this.state.mask) {
       this.setState({mask: this.getMaximumMask()});
     }
+    this.c = this.canvas.current.getContext('2d');
     this.c.setTransform(1, 0, 0, 1, PADDING, PADDING);
+    this.draw();
+  }
+  
+  componentDidUpdate() {
     this.draw();
   }
   

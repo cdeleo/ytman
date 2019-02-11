@@ -6,10 +6,13 @@ function apiUrl(appId, api, version, method) {
 }
 
 function sendLoadDataMessage() {
+  const rawTitle = document.querySelector('div.title textarea').value;
+  const titleTokens = rawTitle.split(' - ');
   loadDataMessage = {
     type: 'LOAD_DATA',
     data: {
-      title: document.querySelector('div.title textarea').value
+      title: titleTokens[0],
+      subtitle: titleTokens[1] || ''
     }
   };
   chrome.runtime.sendMessage(loadDataMessage);
