@@ -3,6 +3,8 @@
 }(this, (function() {
 
 const APP_ID = 'backend-dot-youtube-manager-196811';
+const RATIO = 720 / 1280;
+const WIDTH = 400;
 
 const e = React.createElement;
 
@@ -13,6 +15,7 @@ const {
   CardActions,
   CardContent,
   CardHeader,
+  CircularProgress,
   CssBaseline,
   Fab,
   MuiThemeProvider,
@@ -119,7 +122,7 @@ const StyledMetadataCard = withStyles(theme => ({
 }))(MetadataCard);
 
 function ImagePlaceholder(props) {
-  const height = Math.round(props.width * 720 / 1280);
+  const height = Math.round(props.width * RATIO);
   return e('div', {
     className: props.classes.root,
     style: {width: props.width, height: height}});
@@ -146,10 +149,10 @@ class NewImagePanel extends React.Component {
       imageComponent = e(ImageCropper, {
         ref: this.props.imageCropper,
         image: this.state.image,
-        width: 400
+        width: WIDTH
       });
     } else {
-      imageComponent = e(StyledImagePlaceholder, {width: 400});
+      imageComponent = e(StyledImagePlaceholder, {width: WIDTH});
     }
     return e('div', visibility(this.props.visible),
       imageComponent,
@@ -159,7 +162,7 @@ class NewImagePanel extends React.Component {
         e(Button, {
             onClick: e => this.props.imageCropper.current.resetMask()}, 'reset')
       ),
-      e(StyledTextField, {label: 'name', required: true, fullWidth: true}),
+      e(StyledTextField, {label: 'name', fullWidth: true}),
       e(StyledTextField, {label: 'multiverse id', fullWidth: true}),
       e('input', {
         ref: this.fileInput,
@@ -190,7 +193,7 @@ class NewImagePanel extends React.Component {
 
 function ExistingImagePanel(props) {
   return e('div', visibility(props.visible),
-    e(StyledImagePlaceholder, {width: 400})
+    e(StyledImagePlaceholder, {width: WIDTH})
   );
 }
 
@@ -220,10 +223,47 @@ class ImageCard extends React.Component {
   }
 }
 
+function MainContent(props) {
+  return e('div', null,
+    e(StyledMetadataCard, {
+      title: props.title,
+      subtitle: props.subtitle
+    }),
+    e(ImageCard, {imageCropper: props.imageCropper}),
+    e(StyledDoneFab, {color: 'secondary'},
+      e('i', {className: 'material-icons', onClick: e => props.onDone()}, 'done')
+    )
+  );
+}
+
+function WorkingContent(props) {
+  const containerStyle = {
+    width: WIDTH,
+    height: Math.round(WIDTH * RATIO),
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  };
+  return e('div', {style: containerStyle},
+    e('div', null,
+      e(CircularProgress, {color: 'secondary', style: {margin: 16}})
+    ),
+    e('div', null,
+      e(Typography, null, props.message)
+    )
+  );
+}
+
 class ThumbnailCreator extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {activeImageTab: 'new', title: null, subtitle: null};
+    this.state = {
+      activeImageTab: 'new',
+      working: false,
+      title: null,
+      subtitle: null
+    };
     this.imageCropper = React.createRef();
   }
   
@@ -244,22 +284,40 @@ class ThumbnailCreator extends React.Component {
   }
   
   render() {
+    let content;
+    if (this.state.working) {
+      content = e(WorkingContent, {message: this.state.workingMessage});
+    } else {
+      content = e(MainContent, {
+        title: this.state.title,
+        subtitle: this.state.subtitle,
+        onDone: () => this.handleDone(),
+        imageCropper: this.imageCropper,
+      });
+    }
     return e(MuiThemeProvider, {theme: theme},
       e(CssBaseline),
       e(MainAppBar),
-      e(StyledMetadataCard, {
-        title: this.state.title,
-        subtitle: this.state.subtitle
-      }),
-      e(ImageCard, {imageCropper: this.imageCropper}),
-      e(StyledDoneFab, {color: 'secondary'},
-        e('i', {className: 'material-icons'}, 'done')
-      )
+      content
     );
   }
   
   handleDone() {
-    console.log(this.imageCropper.current.renderImage());
+    const output = {
+      type: 'NEW_IMAGE',
+      title: this.state.title,
+      subtitle: this.state.subtitle,
+      //imageData: this.imageCropper.current.renderImage(),
+      onUpdate: update => this.handleWorkingUpdate(update)
+    };
+    this.setState({working: true, workingMessage: 'Processing...'});
+    this.props.onDone(output);
+  }
+  
+  handleWorkingUpdate(update) {
+    console.log(update);
+    this.setState({workingMessage: update.message});
+    console.log(this.state);
   }
 }
 

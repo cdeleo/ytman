@@ -4,7 +4,7 @@ chrome.runtime.onInstalled.addListener(() => {
       {
         conditions: [
           new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: { urlContains: '' },
+            pageUrl: { urlContains: 'https://studio.youtube.com/video/' },
           })
         ],
         actions: [new chrome.declarativeContent.ShowPageAction()],

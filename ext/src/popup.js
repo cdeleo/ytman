@@ -28,14 +28,19 @@ function loadData(data) {
   document.querySelector('#title').innerText = data.title;
 }
 
-function handleDone() {
+function handleDone(data) {
   if (port) {
-    getThumbnail(BG_KEY, 'title', 'subtitle', data => {
-      port.postMessage(data);
+    data.onUpdate({message: 'Generating thumbnail...'});
+    getThumbnail(BG_KEY, data.title, data.subtitle, thumbnail => {
+      port.postMessage(thumbnail);
+      data.onUpdate({message: 'Done!'});
+      window.close();
     });
   }
 }
 
 chrome.runtime.onConnectExternal.addListener(p => port = p);
 chrome.tabs.executeScript({file: 'src/content-script.js'});
-ReactDOM.render(e(ThumbnailCreator), document.querySelector('#thumbnail-creator'));
+ReactDOM.render(
+  e(ThumbnailCreator, {onDone: handleDone}),
+  document.querySelector('#thumbnail-creator'));
