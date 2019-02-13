@@ -328,11 +328,9 @@ class ThumbnailCreator extends React.Component {
         isDoneEnabled: this.getIsDoneEnabled(),
         imageCropper: this.imageCropper,
         onDone: () => this.handleDone(),
-        onChange: update => {
-          console.log(update);
+        onChange: update =>
           this.setState(
-            {data: Object.assign(this.state.data, update)});
-        },
+            {data: Object.assign(this.state.data, update)}),
       });
     }
     return e(MuiThemeProvider, {theme: theme},
