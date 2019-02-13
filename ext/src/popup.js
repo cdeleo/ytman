@@ -29,6 +29,7 @@ function loadData(data) {
 }
 
 function handleDone(data) {
+  console.log(data);
   if (port) {
     data.onUpdate({message: 'Generating thumbnail...'});
     getThumbnail(BG_KEY, data.title, data.subtitle, thumbnail => {
@@ -42,5 +43,5 @@ function handleDone(data) {
 chrome.runtime.onConnectExternal.addListener(p => port = p);
 chrome.tabs.executeScript({file: 'src/content-script.js'});
 ReactDOM.render(
-  e(ThumbnailCreator, {onDone: handleDone}),
+  e(ThumbnailCreator, {onDone: data => handleDone(data)}),
   document.querySelector('#thumbnail-creator'));

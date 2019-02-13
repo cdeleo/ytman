@@ -70,7 +70,6 @@ class ImageCropper extends React.Component {
   }
   
   render() {
-    console.log('render');
     const height = this.props.image ? this.imageScale * this.props.image.height + 2 * PADDING : 0;
     return e('div', null,
       e('canvas', {

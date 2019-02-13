@@ -69,10 +69,6 @@ const StyledTextField = withStyles(theme => ({
   }
 }))(TextField);
 
-function visibility(visible) {
-  return visible ? {} : {style: {display: 'none'}};
-}
-
 function MainAppBar(props) {
   return e(AppBar, {position: 'sticky'},
     e(Toolbar, null,
@@ -139,22 +135,21 @@ const StyledImagePlaceholder = withStyles(theme => ({
 class NewImagePanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {image: null};
     this.fileInput = React.createRef();
   }
   
   render() {
     let imageComponent;
-    if (this.state.image) {
+    if (this.props.data.image) {
       imageComponent = e(ImageCropper, {
         ref: this.props.imageCropper,
-        image: this.state.image,
+        image: this.props.data.image,
         width: WIDTH
       });
     } else {
       imageComponent = e(StyledImagePlaceholder, {width: WIDTH});
     }
-    return e('div', visibility(this.props.visible),
+    return e('div', null,
       imageComponent,
       e('div', null,
         e(Button, {
@@ -162,28 +157,44 @@ class NewImagePanel extends React.Component {
         e(Button, {
             onClick: e => this.props.imageCropper.current.resetMask()}, 'reset')
       ),
-      e(StyledTextField, {label: 'name', fullWidth: true}),
-      e(StyledTextField, {label: 'multiverse id', fullWidth: true}),
+      e(StyledTextField, {
+        label: 'name',
+        fullWidth: true,
+        value: this.props.data.name,
+        onChange: e => this.props.onChange({name: e.target.value}),
+      }),
+      e(StyledTextField, {
+        label: 'multiverse id',
+        fullWidth: true,
+        value: this.props.data.mid,
+        onChange: e => this.handleMidChange(e.target.value),
+      }),
       e('input', {
         ref: this.fileInput,
         style: {display: 'none'},
         type: 'file',
         accept: 'image/*',
-        onChange: e => this.handleImageChange(e)
+        onChange: e => this.handleImageChange(e),
       })
     );
   }
   
+  handleMidChange(mid) {
+    if (/^[0-9]*$/.test(mid)) {
+      this.props.onChange({mid: mid});
+    }
+  }
+  
   handleImageChange(e) {
     if (e.target.files.length === 0) {
-      this.setState({image: null});
+      this.props.onChange({image: null});
       return;
     }
     const reader = new FileReader();
     reader.onload = e => {
       const image = new Image();
       image.addEventListener('load', () => {
-        this.setState({image: image});
+        this.props.onChange({image: image});
       });
       image.src = e.target.result;
     };
@@ -192,34 +203,38 @@ class NewImagePanel extends React.Component {
 }
 
 function ExistingImagePanel(props) {
-  return e('div', visibility(props.visible),
-    e(StyledImagePlaceholder, {width: WIDTH})
-  );
+  return e(StyledImagePlaceholder, {width: WIDTH});
 }
 
 class ImageCard extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {activeTab: 'new'};
-  }
-  
   render() {
     return e(StyledCard, null,
       e(CardContent, null,
         e(Tabs, {
             variant: 'fullWidth',
-            value: this.state.activeTab,
-            onChange: (_, value) => this.setState({activeTab: value})},
+            value: this.props.data.activeType,
+            onChange: (_, value) => this.props.onChange({activeType: value})},
           e(Tab, {value: 'new', label: 'New image'}),
           e(Tab, {value: 'existing', label: 'Existing image'})
         ),
-        e(NewImagePanel, {
-          imageCropper: this.props.imageCropper,
-          visible: this.state.activeTab == 'new',
-        }),
-        e(ExistingImagePanel, {visible: this.state.activeTab == 'existing'})
+        this.getPanel(
+          'new', NewImagePanel, {imageCropper: this.props.imageCropper}),
+        this.getPanel('existing', ExistingImagePanel)
       )
     );
+  }
+  
+  getPanel(type, cls, extraProps={}) {
+    const style = this.props.data.activeType == type ? {} : {display: 'none'};
+    const props = {
+      data: this.props.data[type],
+      onChange: update => {
+        const parentUpdate = {};
+        parentUpdate[type] = Object.assign(this.props.data[type], update);
+        this.props.onChange(parentUpdate);
+      },
+    };
+    return e('div', {style: style}, e(cls, Object.assign(extraProps, props)));
   }
 }
 
@@ -229,9 +244,17 @@ function MainContent(props) {
       title: props.title,
       subtitle: props.subtitle
     }),
-    e(ImageCard, {imageCropper: props.imageCropper}),
-    e(StyledDoneFab, {color: 'secondary'},
-      e('i', {className: 'material-icons', onClick: e => props.onDone()}, 'done')
+    e(ImageCard, {
+      data: props.data.image,
+      imageCropper: props.imageCropper,
+      onChange: update => props.onChange(
+        {image: Object.assign(props.data.image, update)}),
+    }),
+    e(StyledDoneFab, {
+        color: 'secondary',
+        disabled: !props.isDoneEnabled,
+        onClick: e => props.onDone()},
+      e('i', {className: 'material-icons'}, 'done')
     )
   );
 }
@@ -259,10 +282,20 @@ class ThumbnailCreator extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeImageTab: 'new',
       working: false,
       title: null,
-      subtitle: null
+      subtitle: null,
+      data: {
+        image: {
+          activeType: 'new',
+          'new': {
+            image: null,
+            name: '',
+            mid: '',
+          },
+          existing: {},
+        },
+      }
     };
     this.imageCropper = React.createRef();
   }
@@ -289,10 +322,17 @@ class ThumbnailCreator extends React.Component {
       content = e(WorkingContent, {message: this.state.workingMessage});
     } else {
       content = e(MainContent, {
+        data: this.state.data,
         title: this.state.title,
         subtitle: this.state.subtitle,
-        onDone: () => this.handleDone(),
+        isDoneEnabled: this.getIsDoneEnabled(),
         imageCropper: this.imageCropper,
+        onDone: () => this.handleDone(),
+        onChange: update => {
+          console.log(update);
+          this.setState(
+            {data: Object.assign(this.state.data, update)});
+        },
       });
     }
     return e(MuiThemeProvider, {theme: theme},
@@ -302,22 +342,47 @@ class ThumbnailCreator extends React.Component {
     );
   }
   
+  getIsDoneEnabled() {
+    switch (this.state.data.image.activeType) {
+      case 'new':
+        if (!this.state.data.image.new.image) {
+          return false;
+        }
+        if (!this.state.data.image.new.name) {
+          return false;
+        }
+        return true;
+      case 'existing':
+        return false;
+      default:
+        return false;
+    }
+  }
+  
   handleDone() {
     const output = {
-      type: 'NEW_IMAGE',
       title: this.state.title,
       subtitle: this.state.subtitle,
-      //imageData: this.imageCropper.current.renderImage(),
       onUpdate: update => this.handleWorkingUpdate(update)
     };
+    switch (this.state.data.image.activeType) {
+      case 'new':
+        output.image = {
+          type: 'new',
+          data: this.imageCropper.current.renderImage(),
+          name: this.state.data.image.new.name,
+          mid: this.state.data.image.new.mid,
+        };
+        break;
+      default:
+        output.image = {};
+    }
     this.setState({working: true, workingMessage: 'Processing...'});
     this.props.onDone(output);
   }
   
   handleWorkingUpdate(update) {
-    console.log(update);
     this.setState({workingMessage: update.message});
-    console.log(this.state);
   }
 }
 
