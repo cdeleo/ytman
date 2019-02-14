@@ -2,7 +2,7 @@
   global.ThumbnailCreator = factory();
 }(this, (function() {
 
-const APP_ID = 'backend-dot-youtube-manager-196811';
+const MTG_IO_URL = 'https://api.magicthegathering.io/v1/';
 const RATIO = 720 / 1280;
 const WIDTH = 400;
 
@@ -18,6 +18,7 @@ const {
   CircularProgress,
   CssBaseline,
   Fab,
+  InputAdornment,
   MuiThemeProvider,
   Tab,
   Table,
@@ -32,8 +33,23 @@ const {
   withStyles
 } = window['material-ui'];
 
-function apiUrl(appId, api, version, method) {
-  return `https://${appId}.appspot.com/_ah/api/${api}/${version}/${method}`;
+function lookupCard(mid, needSet=false) {
+  return fetch(MTG_IO_URL + 'cards/' + mid)
+    .then(cardResponse => cardResponse.json())
+    .then(cardData => {
+      if (needSet) {
+        return fetch(MTG_IO_URL + 'sets/' + cardData.card.set)
+          .then(setResponse => setResponse.json())
+          .then(setData => {
+            return {
+              card: cardData.card,
+              set: setData.set,
+            };
+          });
+      } else {
+        return {card: cardData.card};
+      }
+    });
 }
 
 const theme = createMuiTheme({
@@ -162,12 +178,14 @@ class NewImagePanel extends React.Component {
         fullWidth: true,
         value: this.props.data.name,
         onChange: e => this.props.onChange({name: e.target.value}),
+        InputProps: this.getNameInputProps(),
       }),
       e(StyledTextField, {
         label: 'multiverse id',
         fullWidth: true,
         value: this.props.data.mid,
         onChange: e => this.handleMidChange(e.target.value),
+        onBlur: e => this.handleMidBlur(e.target.value),
       }),
       e('input', {
         ref: this.fileInput,
@@ -179,10 +197,30 @@ class NewImagePanel extends React.Component {
     );
   }
   
+  getNameInputProps() {
+    if (this.props.data.nameLoading) {
+      return {endAdornment: e(InputAdornment, {position: 'end'},
+        e(CircularProgress, {color: 'secondary', size: 20})
+      )};
+    } else {
+      return {};
+    }
+  }
+  
   handleMidChange(mid) {
     if (/^[0-9]*$/.test(mid)) {
       this.props.onChange({mid: mid});
     }
+  }
+  
+  handleMidBlur(mid) {
+    if (!mid) {
+      return;
+    }
+    this.props.onChange({nameLoading: true});
+    lookupCard(mid).then(data => {
+      this.props.onChange({name: data.card.name, nameLoading: false});
+    });
   }
   
   handleImageChange(e) {
@@ -291,6 +329,7 @@ class ThumbnailCreator extends React.Component {
           'new': {
             image: null,
             name: '',
+            nameLoading: false,
             mid: '',
           },
           existing: {},
