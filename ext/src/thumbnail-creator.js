@@ -2,6 +2,7 @@
   global.ThumbnailCreator = factory();
 }(this, (function() {
 
+const BACKEND_APP_ID = 'backend-dot-youtube-manager-196811';
 const MTG_IO_URL = 'https://api.magicthegathering.io/v1/';
 const RATIO = 720 / 1280;
 const WIDTH = 400;
@@ -50,6 +51,34 @@ function lookupCard(mid, needSet=false) {
         return {card: cardData.card};
       }
     });
+}
+
+function apiUrl(appId, api, version, method) {
+  return `https://${appId}.appspot.com/_ah/api/${api}/${version}/${method}`;
+}
+
+function createImage(data, name, mid) {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({interactive: true}, token => {
+      const params = new URLSearchParams({
+        data: data,
+        name: name,
+      });
+      if (mid) {
+        params.metadata = [{key: 'mid', value: parseInt(mid)}];
+      }
+      fetch(
+          apiUrl(BACKEND_APP_ID, 'ytman', 'v1', 'images/create'),
+          {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token},
+            body: params,
+          })
+        .then(res => res.json())
+        .then(data => resolve(data.image))
+        .catch(e => reject(e));
+    });
+  });
 }
 
 const theme = createMuiTheme({
@@ -151,14 +180,26 @@ const StyledImagePlaceholder = withStyles(theme => ({
 class NewImagePanel extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {loadingName: false};
+    this.imageCropper = React.createRef();
     this.fileInput = React.createRef();
+  }
+  
+  static get defaultProps() {
+    return {
+      data: {
+        image: null,
+        name: '',
+        mid: '',
+      }
+    };
   }
   
   render() {
     let imageComponent;
     if (this.props.data.image) {
       imageComponent = e(ImageCropper, {
-        ref: this.props.imageCropper,
+        ref: this.imageCropper,
         image: this.props.data.image,
         width: WIDTH
       });
@@ -171,13 +212,17 @@ class NewImagePanel extends React.Component {
         e(Button, {
             onClick: e => this.fileInput.current.click()}, 'select'),
         e(Button, {
-            onClick: e => this.props.imageCropper.current.resetMask()}, 'reset')
+            onClick: e => {
+              if (this.imageCropper.current) {
+                this.imageCropper.current.resetMask();
+              }
+            }}, 'reset')
       ),
       e(StyledTextField, {
         label: 'name',
         fullWidth: true,
         value: this.props.data.name,
-        onChange: e => this.props.onChange({name: e.target.value}),
+        onChange: e => this.handleChange({name: e.target.value}),
         InputProps: this.getNameInputProps(),
       }),
       e(StyledTextField, {
@@ -198,7 +243,7 @@ class NewImagePanel extends React.Component {
   }
   
   getNameInputProps() {
-    if (this.props.data.nameLoading) {
+    if (this.state.loadingName) {
       return {endAdornment: e(InputAdornment, {position: 'end'},
         e(CircularProgress, {color: 'secondary', size: 20})
       )};
@@ -207,9 +252,29 @@ class NewImagePanel extends React.Component {
     }
   }
   
+  handleChange(update) {
+    const newData = Object.assign(this.props.data, update);
+    this.props.onChange(
+      {
+        data: newData,
+        isValid: this.getIsValid(newData),
+        getBgKey: () => this.getBgKey(),
+      });
+  }
+  
+  getIsValid(data) {
+    if (!data.image) {
+      return false;
+    }
+    if (!data.name) {
+      return false;
+    }
+    return true;
+  }
+  
   handleMidChange(mid) {
     if (/^[0-9]*$/.test(mid)) {
-      this.props.onChange({mid: mid});
+      this.handleChange({mid: mid});
     }
   }
   
@@ -217,26 +282,35 @@ class NewImagePanel extends React.Component {
     if (!mid) {
       return;
     }
-    this.props.onChange({nameLoading: true});
+    this.setState({loadingName: true});
     lookupCard(mid).then(data => {
-      this.props.onChange({name: data.card.name, nameLoading: false});
+      this.handleChange({name: data.card.name});
+      this.setState({loadingName: false});
     });
   }
   
   handleImageChange(e) {
     if (e.target.files.length === 0) {
-      this.props.onChange({image: null});
+      this.handleChange({image: null});
       return;
     }
     const reader = new FileReader();
     reader.onload = e => {
       const image = new Image();
       image.addEventListener('load', () => {
-        this.props.onChange({image: image});
+        this.handleChange({image: image});
       });
       image.src = e.target.result;
     };
     reader.readAsDataURL(e.target.files[0]);
+  }
+  
+  getBgKey() {
+    return createImage(
+        this.imageCropper.current.renderImage(),
+        this.props.data.name,
+        this.props.data.mid)
+      .then(image => image.key);
   }
 }
 
@@ -251,50 +325,74 @@ class ImageCard extends React.Component {
         e(Tabs, {
             variant: 'fullWidth',
             value: this.props.data.activeType,
-            onChange: (_, value) => this.props.onChange({activeType: value})},
+            onChange: (_, value) => this.handleChange({activeType: value})},
           e(Tab, {value: 'new', label: 'New image'}),
           e(Tab, {value: 'existing', label: 'Existing image'})
         ),
-        this.getPanel(
-          'new', NewImagePanel, {imageCropper: this.props.imageCropper}),
+        this.getPanel('new', NewImagePanel),
         this.getPanel('existing', ExistingImagePanel)
       )
     );
   }
   
-  getPanel(type, cls, extraProps={}) {
+  static get defaultProps() {
+    return {
+      data: {
+        activeType: 'new',
+        'new': {},
+        existing: {},
+      }
+    };
+  }
+  
+  getPanel(type, cls) {
     const style = this.props.data.activeType == type ? {} : {display: 'none'};
     const props = {
-      data: this.props.data[type],
-      onChange: update => {
-        const parentUpdate = {};
-        parentUpdate[type] = Object.assign(this.props.data[type], update);
-        this.props.onChange(parentUpdate);
+      data: this.props.data[type].data,
+      onChange: value => {
+        const update = {};
+        update[type] = value;
+        this.handleChange(update);
       },
     };
-    return e('div', {style: style}, e(cls, Object.assign(extraProps, props)));
+    return e('div', {style: style}, e(cls, props));
+  }
+  
+  handleChange(update) {
+    const newData = Object.assign(this.props.data, update);
+    const activeImageData = newData[newData.activeType] || {isValid: false};
+    this.props.onChange({
+      data: newData,
+      isValid: activeImageData.isValid,
+      getBgKey: activeImageData.getBgKey,
+    });
   }
 }
 
-function MainContent(props) {
-  return e('div', null,
-    e(StyledMetadataCard, {
-      title: props.title,
-      subtitle: props.subtitle
-    }),
-    e(ImageCard, {
-      data: props.data.image,
-      imageCropper: props.imageCropper,
-      onChange: update => props.onChange(
-        {image: Object.assign(props.data.image, update)}),
-    }),
-    e(StyledDoneFab, {
-        color: 'secondary',
-        disabled: !props.isDoneEnabled,
-        onClick: e => props.onDone()},
-      e('i', {className: 'material-icons'}, 'done')
-    )
-  );
+class MainContent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {image: {isValid: false}};
+  }
+  
+  render() {
+    return e('div', null,
+      e(StyledMetadataCard, {
+        title: this.props.title,
+        subtitle: this.props.subtitle
+      }),
+      e(ImageCard, {
+        data: this.state.image.data,
+        onChange: value => this.setState({image: value})
+      }),
+      e(StyledDoneFab, {
+          color: 'secondary',
+          disabled: !this.state.image.isValid,
+          onClick: e => this.props.onDone({bgKey: this.state.image.getBgKey()})},
+        e('i', {className: 'material-icons'}, 'done')
+      )
+    );
+  }
 }
 
 function WorkingContent(props) {
@@ -323,20 +421,8 @@ class ThumbnailCreator extends React.Component {
       working: false,
       title: null,
       subtitle: null,
-      data: {
-        image: {
-          activeType: 'new',
-          'new': {
-            image: null,
-            name: '',
-            nameLoading: false,
-            mid: '',
-          },
-          existing: {},
-        },
-      }
+      workingMessage: '',
     };
-    this.imageCropper = React.createRef();
   }
   
   componentDidMount() {
@@ -364,12 +450,7 @@ class ThumbnailCreator extends React.Component {
         data: this.state.data,
         title: this.state.title,
         subtitle: this.state.subtitle,
-        isDoneEnabled: this.getIsDoneEnabled(),
-        imageCropper: this.imageCropper,
-        onDone: () => this.handleDone(),
-        onChange: update =>
-          this.setState(
-            {data: Object.assign(this.state.data, update)}),
+        onDone: output => this.handleDone(output),
       });
     }
     return e(MuiThemeProvider, {theme: theme},
@@ -379,47 +460,14 @@ class ThumbnailCreator extends React.Component {
     );
   }
   
-  getIsDoneEnabled() {
-    switch (this.state.data.image.activeType) {
-      case 'new':
-        if (!this.state.data.image.new.image) {
-          return false;
-        }
-        if (!this.state.data.image.new.name) {
-          return false;
-        }
-        return true;
-      case 'existing':
-        return false;
-      default:
-        return false;
-    }
-  }
-  
-  handleDone() {
-    const output = {
+  handleDone(data) {
+    this.setState({working: true, workingMessage: 'Processing...'});
+    this.props.onDone({
       title: this.state.title,
       subtitle: this.state.subtitle,
-      onUpdate: update => this.handleWorkingUpdate(update)
-    };
-    switch (this.state.data.image.activeType) {
-      case 'new':
-        output.image = {
-          type: 'new',
-          data: this.imageCropper.current.renderImage(),
-          name: this.state.data.image.new.name,
-          mid: this.state.data.image.new.mid,
-        };
-        break;
-      default:
-        output.image = {};
-    }
-    this.setState({working: true, workingMessage: 'Processing...'});
-    this.props.onDone(output);
-  }
-  
-  handleWorkingUpdate(update) {
-    this.setState({workingMessage: update.message});
+      bgKey: data.bgKey,
+      onUpdate: update => this.setState({workingMessage: update.message}),
+    });
   }
 }
 
