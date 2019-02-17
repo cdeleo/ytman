@@ -81,6 +81,25 @@ function createImage(data, name, mid) {
   });
 }
 
+function getDescription(mid) {
+  if (mid) {
+    return lookupCard(mid, needSet=true)
+      .then(data => {
+        const name = data.card.name;
+        const artist = data.card.artist;
+        const year = data.set.releaseDate.substring(0, 4);
+        const company = (
+            'Wizards of the Coast LLC, a subsidiary of Hasbro, Inc.');
+        return (
+          `Thumbnail from ${name} by ${artist}\n` +
+          `\u00A9 ${year} ${company}`
+        );
+      });
+  } else {
+    return new Promise(resolve => resolve(null));
+  }
+}
+
 const theme = createMuiTheme({
   palette: {
     type: 'light',
@@ -259,6 +278,7 @@ class NewImagePanel extends React.Component {
         data: newData,
         isValid: this.getIsValid(newData),
         getBgKey: () => this.getBgKey(),
+        getDescription: () => getDescription(this.props.data.mid),
       });
   }
   
@@ -365,6 +385,7 @@ class ImageCard extends React.Component {
       data: newData,
       isValid: activeImageData.isValid,
       getBgKey: activeImageData.getBgKey,
+      getDescription: activeImageData.getDescription,
     });
   }
 }
@@ -388,7 +409,10 @@ class MainContent extends React.Component {
       e(StyledDoneFab, {
           color: 'secondary',
           disabled: !this.state.image.isValid,
-          onClick: e => this.props.onDone({bgKey: this.state.image.getBgKey()})},
+          onClick: e => this.props.onDone({
+            getBgKey: this.state.image.getBgKey,
+            getDescription: this.state.image.getDescription,
+          })},
         e('i', {className: 'material-icons'}, 'done')
       )
     );
@@ -465,7 +489,8 @@ class ThumbnailCreator extends React.Component {
     this.props.onDone({
       title: this.state.title,
       subtitle: this.state.subtitle,
-      bgKey: data.bgKey,
+      getBgKey: data.getBgKey,
+      getDescription: data.getDescription,
       onUpdate: update => this.setState({workingMessage: update.message}),
     });
   }

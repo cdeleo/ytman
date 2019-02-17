@@ -31,23 +31,25 @@ function loadData(data) {
   document.querySelector('#title').innerText = data.title;
 }
 
-function startGetThumbnail(data, imageKey) {
-  
-}
-
 function handleDone(data) {
-  console.log(data);
   if (port) {
     data.onUpdate({message: 'Creating image...'});
-    data.bgKey
+    data.getBgKey()
       .then(bgKey => {
         data.onUpdate({message: 'Generating thumbnail...'});
         return getThumbnail(bgKey, data.title, data.subtitle);
       })
       .then(thumbnail => {
-        port.postMessage(thumbnail);
-        data.onUpdate({message: 'Done!'});
-        window.close();
+        port.postMessage({thumbnail: thumbnail});
+        data.onUpdate({message: 'Generating description...'});
+        data.getDescription()
+          .then(description => {
+            if (description) {
+              port.postMessage({description: description});
+            }
+            data.onUpdate({message: 'Done!'});
+            window.close();
+          });
       });
   }
 }

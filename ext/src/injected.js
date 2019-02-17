@@ -31,11 +31,17 @@ function base64ToBlob(base64, mimetype, slicesize) {
 function connectToExt() {
   const port = chrome.runtime.connect(YTMAN_EXT_ID);
   port.onMessage.addListener(message => {
-    const thumbnailBlob = base64ToBlob(message, 'image/png');
-    const fileInput = document.querySelector('#file-loader');
-    Object.defineProperty(
-      fileInput, 'files', {get: () => [thumbnailBlob], configurable: true});
-    fileInput.dispatchEvent(new Event('change'));
+    if (message.thumbnail) {
+      const thumbnailBlob = base64ToBlob(message.thumbnail, 'image/png');
+      const fileInput = document.querySelector('#file-loader');
+      Object.defineProperty(
+        fileInput, 'files', {get: () => [thumbnailBlob], configurable: true});
+      fileInput.dispatchEvent(new Event('change'));
+    }
+    if (message.description) {
+      const descriptionBox = document.querySelector('.description textarea');
+      descriptionBox.value = message.description;
+    }
   });
 }
 
