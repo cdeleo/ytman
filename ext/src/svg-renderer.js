@@ -71,8 +71,9 @@ class SvgRenderer {
     const operations = [];
     this._traverse(svg.documentElement, state, operations);
     Promise.all(operations).then(resolvedOperations => {
+      const runState = new StateStack();
       for (const op of resolvedOperations) {
-        op(c, valueMap);
+        op(c, valueMap, runState);
       }
     });
   }
@@ -81,8 +82,9 @@ class SvgRenderer {
     state.save();
     this._parseState(state.current(), root);
     const currentState = Object.assign({}, state.current());
-    operations.push(c => {
+    operations.push((c, _, runState) => {
       c.save();
+      runState.save();
       this._applyState(c, currentState);
     });
     const r = this._innerRender(root, currentState);
@@ -94,7 +96,10 @@ class SvgRenderer {
         this._traverse(child, state, operations);
       }
     }
-    operations.push(c => c.restore());
+    operations.push((c, _, runState) => {
+      runState.restore();
+      c.restore();
+    });
     state.restore();
   }
   
@@ -160,10 +165,47 @@ class SvgRenderer {
   _loadFontFamily(fontFamily) {
     if (this.fontMap[fontFamily]) {
       const font = new FontFace(fontFamily, this.fontMap[fontFamily]);
-      return font.load();
+      return font.load()
+        .then(loadedFont => {
+          if (loadedFont) {
+            document.fonts.add(loadedFont);
+          }
+        })
+        .catch(e => console.log('Error loading font:\n' + state.fontFamily));
     } else {
       return Promise.resolve(null);
     }
+  }
+  
+  _measureText(root, state) {
+    const currentState = Object.assign({}, state);
+    let node = root;
+    while (true) {
+      this._parseState(currentState, node);
+      if (!node.children.length) {
+        break;
+      }
+      node = node.children[0];
+    }
+    if (node.textContent) {
+      return this._loadFontFamily(currentState.fontFamily)
+        .then(() => (c, valueMap) => {
+          c.save();
+          this._applyState(c, currentState);
+          const initialWidth = c.measureText(node.textContent).width;
+          const finalWidth = c.measureText(
+            this._replaceText(node.textContent, valueMap)).width;
+          c.restore();
+          return finalWidth - initialWidth;
+        });
+    }
+  }
+  
+  _replaceText(text, valueMap) {
+    return text.replace(
+      /\{(.+?)\}/g,
+      (match, key) => valueMap[key] ? valueMap[key] : match
+    );
   }
   
   _innerRender(node, state) {
@@ -185,8 +227,20 @@ class SvgRenderer {
     return {};
   }
   
-  _renderG(node) {
-    return {processChildren: true};
+  _renderG(node, state) {
+    const r = {processChildren: true};
+    if (node.parentElement.tagName != 'svg') {
+      for (let i = node.children.length - 1; i >= 0; i--) {
+        if (node.children[i].tagName == 'text') {
+          r.operation = this._measureText(node.children[i], state)
+            .then(getDw => (c, valueMap, runState) => {
+              runState.current().dw = getDw(c, valueMap);
+            });
+          break;
+        }
+      }
+    }
+    return r;
   }
   
   _renderImage(node) {
@@ -210,7 +264,7 @@ class SvgRenderer {
           return (c, valueMap) => {
             const match = node.href.baseVal.match(/([^\/]+)\.[^\/]+/);
             if (match && valueMap[match[1]]) {
-              c.drawImage(valueMap[match[1]], ...args)
+              c.drawImage(valueMap[match[1]], ...args);
             } else {
               console.log('Error loading image:\n' + node.href.baseVal);
               c.fillStyle = 'red';
@@ -233,11 +287,12 @@ class SvgRenderer {
   
   _renderRect(node) {
     return {
-      operation: Promise.resolve(c => {
+      operation: Promise.resolve((c, valueMap, runState) => {
+        const dw = runState.current().dw || 0;
         const args = [
           value(node.x),
           value(node.y),
-          value(node.width),
+          value(node.width) + dw,
           value(node.height)
         ];
         c.fillRect(...args);
@@ -257,18 +312,10 @@ class SvgRenderer {
   _renderTspan(node, state) {
     return {
       operation: this._loadFontFamily(state.fontFamily)
-        .then(loadedFont => {
-          if (loadedFont) {
-            document.fonts.add(loadedFont);
-          }
-        })
-        .catch(e => console.log('Error loading font:\n' + e))
         .then(() => {
           return (c, valueMap) => {
-            const textContent = node.textContent.replace(
-              /\{(.+?)\}/g,
-              (match, key) => valueMap[key] ? valueMap[key] : match
-            );
+            const textContent = this._replaceText(
+              node.textContent, valueMap);
             const args = [
               textContent,
               value(node.x),
