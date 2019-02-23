@@ -1716,7 +1716,8 @@
       
       const canvas = document.querySelector('canvas');
       const c = canvas.getContext('2d');
-      renderer.render(c);
+      const valueMap = {title: 'TITLE', subtitle: 'SUBTITLE'};
+      renderer.render(c, valueMap);
     </script>
   </body>
 </html>

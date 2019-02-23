@@ -65,14 +65,14 @@ class SvgRenderer {
     this.fontMap = fontMap;
   }
   
-  render(c) {
+  render(c, valueMap) {
     const svg = this.parser.parseFromString(this.svgString, 'image/svg+xml');
     const state = new StateStack();
     const operations = [];
     this._traverse(svg.documentElement, state, operations);
     Promise.all(operations).then(resolvedOperations => {
       for (const op of resolvedOperations) {
-        op(c);
+        op(c, valueMap);
       }
     });
   }
@@ -254,9 +254,13 @@ class SvgRenderer {
         })
         .catch(e => console.log('Error loading font:\n' + e))
         .then(() => {
-          return c => {
+          return (c, valueMap) => {
+            const textContent = node.textContent.replace(
+              /\{(.+?)\}/g,
+              (match, key) => valueMap[key] ? valueMap[key] : match
+            );
             const args = [
-              node.textContent,
+              textContent,
               value(node.x),
               value(node.y)
             ];
