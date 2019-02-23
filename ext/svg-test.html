@@ -1716,8 +1716,16 @@
       
       const canvas = document.querySelector('canvas');
       const c = canvas.getContext('2d');
-      const valueMap = {title: 'TITLE', subtitle: 'SUBTITLE'};
-      renderer.render(c, valueMap);
+      const image = new Image();
+      image.onload = () => {
+        const valueMap = {
+          title: 'TITLE',
+          subtitle: 'SUBTITLE',
+          'Channel%20Art%20Template%20(Fireworks)': image,
+        };
+        renderer.render(c, valueMap);
+      };
+      image.src = 'https://upload.wikimedia.org/wikipedia/commons/5/57/Octopus2.jpg'
     </script>
   </body>
 </html>

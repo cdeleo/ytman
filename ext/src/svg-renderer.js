@@ -207,10 +207,15 @@ class SvgRenderer {
           return c => c.drawImage(image, ...args);
         })
         .catch(e => {
-          return c => {
-            console.log('Error loading image:\n' + e);
-            c.fillStyle = 'red';
-            c.fillRect(...args);
+          return (c, valueMap) => {
+            const match = node.href.baseVal.match(/([^\/]+)\.[^\/]+/);
+            if (match && valueMap[match[1]]) {
+              c.drawImage(valueMap[match[1]], ...args)
+            } else {
+              console.log('Error loading image:\n' + node.href.baseVal);
+              c.fillStyle = 'red';
+              c.fillRect(...args);
+            }
           };
         })
     };
