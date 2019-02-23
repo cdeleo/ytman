@@ -337,8 +337,6 @@ class SvgRenderer {
     }
     return false;
   }
-  
-  
 }
   
 return SvgRenderer;
