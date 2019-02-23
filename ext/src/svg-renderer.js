@@ -252,6 +252,7 @@ class SvgRenderer {
             document.fonts.add(loadedFont);
           }
         })
+        .catch(e => console.log('Error loading font:\n' + e))
         .then(() => {
           return c => {
             const args = [
