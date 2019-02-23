@@ -190,6 +190,12 @@ class SvgRenderer {
   }
   
   _renderImage(node) {
+    const args = [
+      value(node.x),
+      value(node.y),
+      value(node.width),
+      value(node.height)
+    ];
     return {
       operation: new Promise((resolve, reject) => {
           const image = new Image();
@@ -198,16 +204,15 @@ class SvgRenderer {
           image.src = node.href.baseVal;
         })
         .then(image => {
+          return c => c.drawImage(image, ...args);
+        })
+        .catch(e => {
           return c => {
-            c.drawImage(
-              image,
-              value(node.x),
-              value(node.y),
-              value(node.width),
-              value(node.height));
+            console.log('Error loading image:\n' + e);
+            c.fillStyle = 'red';
+            c.fillRect(...args);
           };
         })
-        .catch(e => () => console.log(e))
     };
   }
   
