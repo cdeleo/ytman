@@ -34,22 +34,22 @@ function loadData(data) {
 function handleDone(data) {
   if (port) {
     data.onUpdate({message: 'Creating image...'});
-    data.getBgKey()
+    const setThumbnail = data.getBgKey()
       .then(bgKey => {
         data.onUpdate({message: 'Generating thumbnail...'});
         return getThumbnail(bgKey, data.title, data.subtitle);
       })
-      .then(thumbnail => {
-        port.postMessage({thumbnail: thumbnail});
-        data.onUpdate({message: 'Generating description...'});
-        data.getDescription()
-          .then(description => {
-            if (description) {
-              port.postMessage({description: description});
-            }
-            data.onUpdate({message: 'Done!'});
-            window.close();
-          });
+      .then(thumbnail => port.postMessage({thumbnail: thumbnail}));
+    const setDescription = data.getDescription()
+      .then(description => {
+        if (description) {
+          port.postMessage({description: description});
+        }
+      });
+    Promise.all([setThumbnail, setDescription])
+      .then(() => {
+        data.onUpdate({message: 'Done!'});
+        window.close();
       });
   }
 }

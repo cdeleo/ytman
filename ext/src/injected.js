@@ -41,6 +41,7 @@ function connectToExt() {
     if (message.description) {
       const descriptionBox = document.querySelector('.description textarea');
       descriptionBox.value = message.description;
+      descriptionBox.dispatchEvent(new Event('input'));
     }
   });
 }
