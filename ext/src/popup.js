@@ -38,7 +38,7 @@ function createThumbnail(data) {
   });
   background.src = data.getImageData();
   
-  const svgString = fetch('template.svg')
+  const svgString = fetch('templates/orange.svg')
     .then(response => response.text());
     
   const canvas = document.querySelector('#thumbnail-render');

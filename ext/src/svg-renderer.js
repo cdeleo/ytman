@@ -229,7 +229,8 @@ class SvgRenderer {
   
   _renderG(node, state) {
     const r = {processChildren: true};
-    if (node.parentElement.tagName != 'svg') {
+    const children = Array.from(node.children).map(child => child.tagName).join(',');
+    if (children == 'rect,text') {
       for (let i = node.children.length - 1; i >= 0; i--) {
         if (node.children[i].tagName == 'text') {
           r.operation = this._measureText(node.children[i], state)
