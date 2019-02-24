@@ -277,6 +277,7 @@ class NewImagePanel extends React.Component {
       {
         data: newData,
         isValid: this.getIsValid(newData),
+        getImageData: () => this.imageCropper.current.renderImage(),
         getBgKey: () => this.getBgKey(),
         getDescription: () => getDescription(this.props.data.mid),
       });
@@ -384,6 +385,7 @@ class ImageCard extends React.Component {
     this.props.onChange({
       data: newData,
       isValid: activeImageData.isValid,
+      getImageData: activeImageData.getImageData,
       getBgKey: activeImageData.getBgKey,
       getDescription: activeImageData.getDescription,
     });
@@ -410,6 +412,7 @@ class MainContent extends React.Component {
           color: 'secondary',
           disabled: !this.state.image.isValid,
           onClick: e => this.props.onDone({
+            getImageData: this.state.image.getImageData,
             getBgKey: this.state.image.getBgKey,
             getDescription: this.state.image.getDescription,
           })},
@@ -489,6 +492,7 @@ class ThumbnailCreator extends React.Component {
     this.props.onDone({
       title: this.state.title,
       subtitle: this.state.subtitle,
+      getImageData: data.getImageData,
       getBgKey: data.getBgKey,
       getDescription: data.getDescription,
       onUpdate: update => this.setState({workingMessage: update.message}),

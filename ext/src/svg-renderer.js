@@ -70,7 +70,7 @@ class SvgRenderer {
     const state = new StateStack();
     const operations = [];
     this._traverse(svg.documentElement, state, operations);
-    Promise.all(operations).then(resolvedOperations => {
+    return Promise.all(operations).then(resolvedOperations => {
       const runState = new StateStack();
       for (const op of resolvedOperations) {
         op(c, valueMap, runState);
