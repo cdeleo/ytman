@@ -21,12 +21,10 @@ const {
   Fab,
   InputAdornment,
   MuiThemeProvider,
-  Tab,
   Table,
   TableBody,
   TableCell,
   TableRow,
-  Tabs,
   TextField,
   Toolbar,
   Typography,
@@ -322,23 +320,11 @@ class NewImagePanel extends React.Component {
   }
 }
 
-function ExistingImagePanel(props) {
-  return e(StyledImagePlaceholder, {width: WIDTH});
-}
-
 class ImageCard extends React.Component {
   render() {
     return e(StyledCard, null,
       e(CardContent, null,
-        e(Tabs, {
-            variant: 'fullWidth',
-            value: this.props.data.activeType,
-            onChange: (_, value) => this.handleChange({activeType: value})},
-          e(Tab, {value: 'new', label: 'New image'}),
-          e(Tab, {value: 'existing', label: 'Existing image'})
-        ),
-        this.getPanel('new', NewImagePanel),
-        this.getPanel('existing', ExistingImagePanel)
+        this.getPanel()
       )
     );
   }
@@ -346,29 +332,24 @@ class ImageCard extends React.Component {
   static get defaultProps() {
     return {
       data: {
-        activeType: 'new',
         'new': {},
-        existing: {},
       }
     };
   }
   
-  getPanel(type, cls) {
-    const style = this.props.data.activeType == type ? {} : {display: 'none'};
+  getPanel() {
     const props = {
-      data: this.props.data[type].data,
+      data: this.props.data['new'].data,
       onChange: value => {
-        const update = {};
-        update[type] = value;
-        this.handleChange(update);
+        this.handleChange({'new': value});
       },
     };
-    return e('div', {style: style}, e(cls, props));
+    return e('div', {}, e(NewImagePanel, props));
   }
   
   handleChange(update) {
     const newData = Object.assign(this.props.data, update);
-    const activeImageData = newData[newData.activeType] || {isValid: false};
+    const activeImageData = newData['new'] || {isValid: false};
     this.props.onChange({
       data: newData,
       isValid: activeImageData.isValid,
