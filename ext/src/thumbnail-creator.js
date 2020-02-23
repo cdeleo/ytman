@@ -3,7 +3,7 @@
 }(this, (function() {
 
 const BACKEND_APP_ID = 'backend-dot-youtube-manager-196811';
-const MTG_IO_URL = 'https://api.magicthegathering.io/v1/';
+const SCRYFALL_URL = 'https://api.scryfall.com/';
 const RATIO = 720 / 1280;
 const WIDTH = 400;
 
@@ -34,23 +34,9 @@ const {
   withStyles
 } = window['material-ui'];
 
-function lookupCard(mid, needSet=false) {
-  return fetch(MTG_IO_URL + 'cards/' + mid)
-    .then(cardResponse => cardResponse.json())
-    .then(cardData => {
-      if (needSet) {
-        return fetch(MTG_IO_URL + 'sets/' + cardData.card.set)
-          .then(setResponse => setResponse.json())
-          .then(setData => {
-            return {
-              card: cardData.card,
-              set: setData.set,
-            };
-          });
-      } else {
-        return {card: cardData.card};
-      }
-    });
+function lookupCard(mid) {
+  return fetch(SCRYFALL_URL + 'cards/multiverse/' + mid)
+    .then(response => response.json());
 }
 
 function apiUrl(appId, api, version, method) {
@@ -83,16 +69,17 @@ function createImage(data, name, mid) {
 
 function getDescription(mid) {
   if (mid) {
-    return lookupCard(mid, needSet=true)
+    return lookupCard(mid)
       .then(data => {
-        const name = data.card.name;
-        const artist = data.card.artist;
-        const year = data.set.releaseDate.substring(0, 4);
+        const name = data.name;
+        const artist = data.artist;
+        const year = data.released_at.substring(0, 4);
         const company = (
             'Wizards of the Coast LLC, a subsidiary of Hasbro, Inc.');
         return (
           `Thumbnail from ${name} by ${artist}\n` +
-          `\u00A9 ${year} ${company}`
+          `\u00A9 ${year} ${company}\n\n` +
+          `Intro by Carbot Animations`
         );
       });
   } else {
@@ -305,7 +292,7 @@ class NewImagePanel extends React.Component {
     }
     this.setState({loadingName: true});
     lookupCard(mid).then(data => {
-      this.handleChange({name: data.card.name});
+      this.handleChange({name: data.name});
       this.setState({loadingName: false});
     });
   }

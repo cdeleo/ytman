@@ -39,8 +39,8 @@ function connectToExt() {
       fileInput.dispatchEvent(new Event('change'));
     }
     if (message.description) {
-      const descriptionBox = document.querySelector('.description textarea');
-      descriptionBox.value = message.description;
+      const descriptionBox = document.querySelector('div.description #textbox');
+      descriptionBox.innerText = message.description;
       descriptionBox.dispatchEvent(new Event('input'));
     }
   });
