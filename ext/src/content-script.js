@@ -6,7 +6,7 @@ function apiUrl(appId, api, version, method) {
 }
 
 function sendLoadDataMessage() {
-  const rawTitle = document.querySelector('div.title textarea').value;
+  const rawTitle = document.querySelector('div.title #textbox').innerText;
   const titleTokens = rawTitle.split(' - ');
   loadDataMessage = {
     type: 'LOAD_DATA',
