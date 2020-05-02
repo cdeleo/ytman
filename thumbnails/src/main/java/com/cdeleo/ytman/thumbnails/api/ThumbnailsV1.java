@@ -26,7 +26,11 @@ import java.awt.Rectangle;
 @Api(
     name = "thumbnails",
     version = "v1",
-    clientIds = {ThumbnailsV1.CONSOLE_CLIENT_ID, ThumbnailsV1.WEB_CLIENT_ID},
+    clientIds = {
+        ThumbnailsV1.CHROME_CLIENT_ID,
+        ThumbnailsV1.CONSOLE_CLIENT_ID,
+        ThumbnailsV1.WEB_CLIENT_ID
+    },
     namespace = @ApiNamespace(
         ownerDomain = "com.cdeleo",
         ownerName = "com.cdeleo",
@@ -35,6 +39,8 @@ import java.awt.Rectangle;
 )
 public class ThumbnailsV1 {
 
+  static final String CHROME_CLIENT_ID =
+      "955262123852-cl81aebbrpqjm200e0kg9g1leo7ftv3u.apps.googleusercontent.com";
   static final String CONSOLE_CLIENT_ID =
       "955262123852-j4nv7slhidt5lcjve721nj9lo8otmfq5.apps.googleusercontent.com";
   static final String WEB_CLIENT_ID =
