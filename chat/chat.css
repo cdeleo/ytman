@@ -1,0 +1,34 @@
+@import url("https://fonts.googleapis.com/css?family=Bree Serif");
+@import url("https://fonts.googleapis.com/css?family=Imprima");
+@import url("https://fonts.googleapis.com/css?family=Roboto");
+body {
+    background-color: transparent;
+}
+
+.message-list {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.message {
+    margin: 5px;
+    padding: 5px 15px 10px 15px;
+    border-radius: 5px;
+    background-color: #efefef;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.message .author {
+    margin-right: 10px;
+    font-family: "Bree Serif";
+    font-size: 20px;
+    color: #3858b3;
+}
+
+.message .text {
+    font-family: "Imprima";
+    font-size: 18px;
+}

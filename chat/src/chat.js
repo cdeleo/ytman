@@ -3,11 +3,14 @@ const API_KEY = 'AIzaSyC83lskLDWEWCWvfoc0qKpl_cxEHMJrRok';
 const LIFESPAN_MS = 20000;
 
 function Message(props) {
-    return e('div', null, props.author + ': ' + props.message);
+    return e('div', { className: 'message' },
+        e('span', { className: 'author' }, props.author),
+        e('span', { className: 'text' }, props.message)
+    );
 }
 
 function MessageList(props) {
-    return e('div', null,
+    return e('div', { className: 'message-list' },
         props.messages.map(m => e(Message, { ...m, key: m.id }))
     );
 }
@@ -28,14 +31,16 @@ class ChatLog extends React.Component {
     }
 
     render() {
-        return e(MessageList, { messages: this.state.messages });
+        return e('div', { className: 'chat-log' },
+            e(MessageList, { messages: this.state.messages })
+        );
     }
 
     setFetchTimeout(delay) {
         if (this.fetchTimer) {
             clearTimeout(this.fetchTimer);
         }
-        this.fetchTimer = setTimeout(() => this.fetchNew(), delay);
+        //this.fetchTimer = setTimeout(() => this.fetchNew(), delay);
     }
 
     setExpireTimeout(messages) {
@@ -44,7 +49,7 @@ class ChatLog extends React.Component {
             this.expireTimer = null;
         }
         if (messages.length) {
-            this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
+            //this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
         }
     }
 
@@ -110,8 +115,9 @@ function simulateFetchMessages(token) {
     const currentTime = Date.now();
     return Promise.resolve({
         newMessages: [
-            { id: 'abc' + currentTime, author: 'octopus', message: 'hello there ' + currentTime, timestamp: currentTime - 500 },
-            { id: 'def' + currentTime, author: 'pangolin', message: 'sick deck, bruh ' + currentTime, timestamp: currentTime },
+            { id: 'abc' + currentTime, author: 'octopus', message: 'hello there', timestamp: currentTime - 500 },
+            { id: 'def' + currentTime, author: 'Pangolin', message: 'sick deck, bruh', timestamp: currentTime },
+            { id: 'ghi' + currentTime, author: 'quetzel', message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.', timestamp: currentTime },
         ],
         token: token + 1,
         nextUpdateMs: 1000,
@@ -158,4 +164,4 @@ function fetchMessages(token) {
 }
 
 gapi.load('client', startChat);
-ReactDOM.render(e(ChatLog, { fetchMessages: fetchMessages }), document.querySelector('#chat'));
+ReactDOM.render(e(ChatLog, { fetchMessages: simulateFetchMessages }), document.querySelector('#chat'));
