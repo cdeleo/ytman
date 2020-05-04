@@ -14,10 +14,12 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    overflow: hidden;
 }
 
 .message {
     position: relative;
+    flex: none;
     overflow: hidden;
     margin: 2px;
     padding: 0px 15px 4px 35px;
