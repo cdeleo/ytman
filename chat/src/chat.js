@@ -6,11 +6,25 @@
 
         static ALPHABET = 'abcdfgijklmnopqz0';
 
+        // Fisher-Yates shuffle adapted from stackoverflow.com/a/6274381.
+        static shuffle(a, rng) {
+            var j, x, i;
+            for (i = a.length - 1; i > 0; i--) {
+                j = Math.floor(rng.uniform() * (i + 1));
+                x = a[i];
+                a[i] = a[j];
+                a[j] = x;
+            }
+            return a;
+        }
+
         static get(seed) {
+            const rng = new RNG(seed);
             let r = '';
-            for (let i = 0; i < 50; i++) {
-                const letter = Math.floor(Math.random() * this.ALPHABET.length);
-                r += this.ALPHABET[letter]
+            while (r.length < 50) {
+                const pool = Array.from(this.ALPHABET);
+                SidebarGenerator.shuffle(pool, rng);
+                r += pool.join('');
             }
             return r;
         }
@@ -18,7 +32,7 @@
 
     function Message(props) {
         return e('div', { className: 'message' },
-            e('div', { className: 'sidebar' }, SidebarGenerator.get()),
+            e('div', { className: 'sidebar' }, SidebarGenerator.get(props.id)),
             e('span', { className: 'author' }, props.author),
             e('span', { className: 'text' }, props.message)
         );
@@ -55,7 +69,7 @@
             if (this.fetchTimer) {
                 clearTimeout(this.fetchTimer);
             }
-            //    this.fetchTimer = setTimeout(() => this.fetchNew(fetchMessages), delay);
+            this.fetchTimer = setTimeout(() => this.fetchNew(fetchMessages), delay);
         }
 
         setExpireTimeout(messages) {
@@ -64,7 +78,7 @@
                 this.expireTimer = null;
             }
             if (messages.length) {
-                //    this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
+                this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
             }
         }
 
