@@ -1,5 +1,4 @@
 const e = React.createElement;
-const API_KEY = 'AIzaSyC83lskLDWEWCWvfoc0qKpl_cxEHMJrRok';
 const LIFESPAN_MS = 20000;
 
 function Message(props) {
@@ -27,7 +26,7 @@ class ChatLog extends React.Component {
     }
 
     componentDidMount() {
-        this.fetchNew();
+        this.props.fetchMessages.then(fetchMessages => this.fetchNew(fetchMessages));
     }
 
     render() {
@@ -36,11 +35,11 @@ class ChatLog extends React.Component {
         );
     }
 
-    setFetchTimeout(delay) {
+    setFetchTimeout(fetchMessages, delay) {
         if (this.fetchTimer) {
             clearTimeout(this.fetchTimer);
         }
-        //this.fetchTimer = setTimeout(() => this.fetchNew(), delay);
+        this.fetchTimer = setTimeout(() => this.fetchNew(fetchMessages), delay);
     }
 
     setExpireTimeout(messages) {
@@ -49,12 +48,12 @@ class ChatLog extends React.Component {
             this.expireTimer = null;
         }
         if (messages.length) {
-            //this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
+            this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
         }
     }
 
-    fetchNew() {
-        this.props.fetchMessages(this.state.token).then(r => {
+    fetchNew(fetchMessages) {
+        fetchMessages(this.state.token).then(r => {
             this.setState(state => {
                 const currentTime = Date.now();
                 const newMessages = r.newMessages
@@ -67,7 +66,7 @@ class ChatLog extends React.Component {
                     messages: totalMessages,
                 };
             });
-            this.setFetchTimeout(r.nextUpdateMs);
+            this.setFetchTimeout(fetchMessages, r.nextUpdateMs);
         });
     }
 
@@ -82,7 +81,7 @@ class ChatLog extends React.Component {
 }
 
 function loadClient() {
-    gapi.client.setApiKey(API_KEY);
+    gapi.client.setApiKey(new URLSearchParams(window.location.search).get('apikey'));
     return gapi.client.load('https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest');
 }
 
@@ -101,14 +100,6 @@ function getChatId(videoId) {
             throw new Error('Video ' + videoId + ' not found.');
         }
     });
-}
-
-let chatId = null;
-
-function startChat() {
-    loadClient()
-        .then(() => getChatId(getVideoId()))
-        .then(r => { chatId = r; });
 }
 
 function simulateFetchMessages(token) {
@@ -133,7 +124,7 @@ function convertToMessage(item) {
     };
 }
 
-function actuallyFetchMessages(token) {
+function fetchMessages(chatId, token) {
     const request = {
         liveChatId: chatId,
         part: "id,snippet,authorDetails",
@@ -155,13 +146,15 @@ function actuallyFetchMessages(token) {
     );
 }
 
-function fetchMessages(token) {
-    if (chatId) {
-        return actuallyFetchMessages(token);
-    } else {
-        return Promise.resolve({ newMessages: [], token: null, nextUpdateMs: 1000 });
-    }
+function getFetchMessages() {
+    return new Promise(resolve => gapi.load('client', resolve))
+        .then(() => loadClient())
+        .then(() => getChatId(getVideoId()))
+        .then(chatId => token => fetchMessages(chatId, token))
+        .catch(err => {
+            console.error(err);
+            return simulateFetchMessages;
+        });
 }
 
-gapi.load('client', startChat);
-ReactDOM.render(e(ChatLog, { fetchMessages: simulateFetchMessages }), document.querySelector('#chat'));
+ReactDOM.render(e(ChatLog, { fetchMessages: getFetchMessages() }), document.querySelector('#chat'));
