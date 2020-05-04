@@ -1,6 +1,10 @@
 @import url("https://fonts.googleapis.com/css?family=Bree Serif");
-@import url("https://fonts.googleapis.com/css?family=Imprima");
-@import url("https://fonts.googleapis.com/css?family=Roboto");
+@import url("https://fonts.googleapis.com/css?family=Noto Sans");
+@font-face {
+    font-family: "Azorius";
+    src: url("fonts/Azorius.woff") format("woff2");
+}
+
 body {
     background-color: transparent;
 }
@@ -13,12 +17,28 @@ body {
 }
 
 .message {
-    margin: 5px;
-    padding: 5px 15px 10px 15px;
+    position: relative;
+    overflow: hidden;
+    margin: 2px;
+    padding: 0px 15px 4px 35px;
     border-radius: 5px;
     background-color: #efefef;
     border-width: 1px;
     border-style: solid;
+}
+
+.side {
+    position: absolute;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    top: -5px;
+    left: 25px;
+    padding: 5px;
+    background-color: #3858b388;
+    font-family: "Azorius";
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    color: white;
 }
 
 .message .author {
@@ -29,6 +49,6 @@ body {
 }
 
 .message .text {
-    font-family: "Imprima";
-    font-size: 18px;
+    font-family: "Noto Sans";
+    font-size: 16px;
 }

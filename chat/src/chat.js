@@ -2,8 +2,23 @@
     const e = React.createElement;
     const LIFESPAN_MS = 20000;
 
+    class SidebarGenerator {
+
+        static ALPHABET = 'abcdfgijklmnopqz0';
+
+        static get(seed) {
+            let r = '';
+            for (let i = 0; i < 50; i++) {
+                const letter = Math.floor(Math.random() * this.ALPHABET.length);
+                r += this.ALPHABET[letter]
+            }
+            return r;
+        }
+    }
+
     function Message(props) {
         return e('div', { className: 'message' },
+            e('div', { className: 'sidebar' }, SidebarGenerator.get()),
             e('span', { className: 'author' }, props.author),
             e('span', { className: 'text' }, props.message)
         );
@@ -40,7 +55,7 @@
             if (this.fetchTimer) {
                 clearTimeout(this.fetchTimer);
             }
-            this.fetchTimer = setTimeout(() => this.fetchNew(fetchMessages), delay);
+            //    this.fetchTimer = setTimeout(() => this.fetchNew(fetchMessages), delay);
         }
 
         setExpireTimeout(messages) {
@@ -49,7 +64,7 @@
                 this.expireTimer = null;
             }
             if (messages.length) {
-                this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
+                //    this.expireTimer = setTimeout(() => this.expireOld(), messages[0].timestamp + LIFESPAN_MS - Date.now());
             }
         }
 
@@ -159,5 +174,4 @@
     }
 
     ReactDOM.render(e(ChatLog, { fetchMessages: getFetchMessages() }), document.querySelector('#chat'));
-
 })();
