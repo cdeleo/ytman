@@ -12,6 +12,7 @@ parser.add_argument('input', type=str, help='Path to the input video.')
 parser.add_argument('output', type=str, help='Path for the output csv.')
 parser.add_argument('--chunk_ms', type=int, default=250, help='Duration of each chunk in ms.')
 parser.add_argument('--duration', type=int, default=-1, help='Duration of video to process in seconds.')
+parser.add_argument('--video_divs', type=int, default=0, help='Number of cumulative spatial divisions to make in each video frame.')
 args = parser.parse_args()
 
 frame_time = lambda f: f.pts * f.time_base
@@ -61,6 +62,17 @@ class ChunkReader(object):
         self._ts_ms += self.chunk_size_ms
         return Chunk(chunk[0], chunk[1], start_ts)
 
+def divide_frame(frame, levels):
+    if levels:
+        mid_h = frame.shape[0] // 2
+        mid_w = frame.shape[1] // 2
+        yield from divide_frame(frame[:mid_h, :mid_w], levels - 1)
+        yield from divide_frame(frame[:mid_h, mid_w:], levels - 1)
+        yield from divide_frame(frame[mid_h:, :mid_w], levels - 1)
+        yield from divide_frame(frame[mid_h:, mid_w:], levels - 1)
+    else:
+        yield frame
+
 def unsigned_diff(a, b):
     ab = a - b
     ba = b - a
@@ -75,14 +87,20 @@ def main():
         for i, chunk in enumerate(ChunkReader(c, args.chunk_ms)):
             if args.duration >= 0 and chunk.start_ts > args.duration:
                 break
-            average_video_frame = scipy.ndimage.gaussian_filter(chunk.average_video_frame(), sigma=5)
+            current_video_frame = scipy.ndimage.gaussian_filter(chunk.average_video_frame(), sigma=5)
             if last_video_frame is None:
-                video_diff = 0
-            else:
-                video_diff = np.linalg.norm(unsigned_diff(average_video_frame, last_video_frame))
-            last_video_frame = average_video_frame
-            output_file.write('%f,%f,%f\n' % (chunk.start_ts, video_diff, chunk.average_audio_power()))
+                last_video_frame = current_video_frame
 
+            output = [chunk.start_ts, chunk.average_audio_power()]
+            frame_divs = (
+                divide_frame(last_video_frame, args.video_divs),
+                divide_frame(current_video_frame, args.video_divs)
+            )
+            for last_div, current_div in zip(*frame_divs):
+                output.append(np.linalg.norm(unsigned_diff(last_div, current_div)))
+            output_file.write(','.join(str(x) for x in output) + '\n')
+
+            last_video_frame = current_video_frame
 
 if __name__ == '__main__':
     main()
