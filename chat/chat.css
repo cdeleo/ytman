@@ -29,6 +29,32 @@ body {
     border-style: solid;
 }
 
+.message-enter {
+    opacity: 0;
+    margin-bottom: -25px;
+}
+
+.message-enter-active {
+    opacity: 1;
+    margin-bottom: 2px;
+    transition-property: opacity, margin-bottom;
+    transition-duration: 250ms;
+    transition-timing-function: ease-in;
+}
+
+.message-exit {
+    opacity: 1;
+    margin-bottom: 2px;
+}
+
+.message-exit-active {
+    opacity: 0;
+    margin-bottom: 25px;
+    transition-property: opacity, margin-bottom;
+    transition-duration: 250ms;
+    transition-timing-function: ease-in;
+}
+
 .sidebar {
     position: absolute;
     transform: rotate(90deg);

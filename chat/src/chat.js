@@ -40,7 +40,13 @@
 
     function MessageList(props) {
         return e('div', { className: 'message-list' },
-            props.messages.map(m => e(Message, { ...m, key: m.id }))
+            e(ReactTransitionGroup.TransitionGroup, {},
+                props.messages.map(m => e(ReactTransitionGroup.CSSTransition, {
+                    key: m.id,
+                    timeout: 250,
+                    classNames: "message",
+                }, e(Message, m)))
+            )
         );
     }
 
