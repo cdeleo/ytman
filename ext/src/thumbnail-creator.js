@@ -155,7 +155,7 @@
     }
   }))(ImagePlaceholder);
 
-  class NewImagePanel extends React.Component {
+  class ImageCard extends React.Component {
     constructor(props) {
       super(props);
       this.state = { loadingName: false };
@@ -184,41 +184,43 @@
       } else {
         imageComponent = e(StyledImagePlaceholder, { width: WIDTH });
       }
-      return e('div', null,
-        imageComponent,
-        e('div', null,
-          e(Button, {
-            onClick: e => this.fileInput.current.click()
-          }, 'select'),
-          e(Button, {
-            onClick: e => {
-              if (this.imageCropper.current) {
-                this.imageCropper.current.resetMask();
+      return e(StyledCard, null,
+        e(CardContent, null,
+          imageComponent,
+          e('div', null,
+            e(Button, {
+              onClick: e => this.fileInput.current.click()
+            }, 'select'),
+            e(Button, {
+              onClick: e => {
+                if (this.imageCropper.current) {
+                  this.imageCropper.current.resetMask();
+                }
               }
-            }
-          }, 'reset')
-        ),
-        e(StyledTextField, {
-          label: 'name',
-          fullWidth: true,
-          value: this.props.data.name,
-          onChange: e => this.handleChange({ name: e.target.value }),
-          InputProps: this.getNameInputProps(),
-        }),
-        e(StyledTextField, {
-          label: 'multiverse id',
-          fullWidth: true,
-          value: this.props.data.mid,
-          onChange: e => this.handleMidChange(e.target.value),
-          onBlur: e => this.handleMidBlur(e.target.value),
-        }),
-        e('input', {
-          ref: this.fileInput,
-          style: { display: 'none' },
-          type: 'file',
-          accept: 'image/*',
-          onChange: e => this.handleImageChange(e),
-        })
+            }, 'reset')
+          ),
+          e(StyledTextField, {
+            label: 'name',
+            fullWidth: true,
+            value: this.props.data.name,
+            onChange: e => this.handleChange({ name: e.target.value }),
+            InputProps: this.getNameInputProps(),
+          }),
+          e(StyledTextField, {
+            label: 'multiverse id',
+            fullWidth: true,
+            value: this.props.data.mid,
+            onChange: e => this.handleMidChange(e.target.value),
+            onBlur: e => this.handleMidBlur(e.target.value),
+          }),
+          e('input', {
+            ref: this.fileInput,
+            style: { display: 'none' },
+            type: 'file',
+            accept: 'image/*',
+            onChange: e => this.handleImageChange(e),
+          })
+        )
       );
     }
 
@@ -286,45 +288,6 @@
         image.src = e.target.result;
       };
       reader.readAsDataURL(e.target.files[0]);
-    }
-  }
-
-  class ImageCard extends React.Component {
-    render() {
-      return e(StyledCard, null,
-        e(CardContent, null,
-          this.getPanel()
-        )
-      );
-    }
-
-    static get defaultProps() {
-      return {
-        data: {
-          'new': {},
-        }
-      };
-    }
-
-    getPanel() {
-      const props = {
-        data: this.props.data['new'].data,
-        onChange: value => {
-          this.handleChange({ 'new': value });
-        },
-      };
-      return e('div', {}, e(NewImagePanel, props));
-    }
-
-    handleChange(update) {
-      const newData = Object.assign(this.props.data, update);
-      const activeImageData = newData['new'] || { isValid: false };
-      this.props.onChange({
-        data: newData,
-        isValid: activeImageData.isValid,
-        getImageData: activeImageData.getImageData,
-        getDescription: activeImageData.getDescription,
-      });
     }
   }
 
