@@ -227,7 +227,7 @@
     getNameInputProps() {
       const props = { readOnly: true };
       if (this.props.cardData && this.props.cardData.loading) {
-        props.endAdornment = e(InputAdornment, { position: 'end' },
+        props.startAdornment = e(InputAdornment, { position: 'end' },
           e(CircularProgress, { color: 'secondary', size: 20 })
         );
       }
