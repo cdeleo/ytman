@@ -39,18 +39,32 @@ function createThumbnail(data) {
     });
 }
 
+function getValueMap(cardData) {
+  if (cardData) {
+    return {
+      name: cardData.name,
+      artist: cardData.artist,
+      company: 'Wizards of the Coast LLC, a subsidiary of Hasbro, Inc.',
+      year: cardData.released_at.substring(0, 4),
+    };
+  }
+  return {};
+}
+
+function getDescription(valueMap) {
+  return (
+    `Thumbnail from ${valueMap.name} by ${valueMap.artist}\n` +
+    `\u00A9 ${valueMap.year} ${valueMap.company}\n\n` +
+    `Intro by Carbot Animations`
+  );
+}
+
 function handleDone(data) {
   if (port) {
+    port.postMessage({ description: getDescription(getValueMap(data.cardData)) });
     data.onUpdate({ message: 'Generating thumbnail...' });
     const setThumbnail = createThumbnail(data)
-      .then(thumbnail => port.postMessage({ thumbnail: thumbnail }));
-    const setDescription = data.getDescription()
-      .then(description => {
-        if (description) {
-          port.postMessage({ description: description });
-        }
-      });
-    Promise.all([setThumbnail, setDescription])
+      .then(thumbnail => port.postMessage({ thumbnail: thumbnail }))
       .then(() => {
         data.onUpdate({ message: 'Done!' });
         window.close();

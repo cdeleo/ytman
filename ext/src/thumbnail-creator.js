@@ -31,31 +31,6 @@
     withStyles
   } = window['material-ui'];
 
-  function lookupCard(mid) {
-    return fetch(SCRYFALL_URL + 'cards/multiverse/' + mid)
-      .then(response => response.json());
-  }
-
-  function getDescription(mid) {
-    if (mid) {
-      return lookupCard(mid)
-        .then(data => {
-          const name = data.name;
-          const artist = data.artist;
-          const year = data.released_at.substring(0, 4);
-          const company = (
-            'Wizards of the Coast LLC, a subsidiary of Hasbro, Inc.');
-          return (
-            `Thumbnail from ${name} by ${artist}\n` +
-            `\u00A9 ${year} ${company}\n\n` +
-            `Intro by Carbot Animations`
-          );
-        });
-    } else {
-      return new Promise(resolve => resolve(null));
-    }
-  }
-
   const theme = createMuiTheme({
     palette: {
       type: 'light',
@@ -155,135 +130,61 @@
     }
   }))(ImagePlaceholder);
 
-  class ImageCard extends React.Component {
+  class ImageControls extends React.Component {
     constructor(props) {
       super(props);
-      this.state = { loadingName: false };
       this.imageCropper = React.createRef();
       this.fileInput = React.createRef();
     }
 
-    static get defaultProps() {
-      return {
-        data: {
-          image: null,
-          name: '',
-          mid: '',
-        }
-      };
-    }
-
     render() {
       let imageComponent;
-      if (this.props.data.image) {
+      if (this.props.image.value) {
         imageComponent = e(ImageCropper, {
           ref: this.imageCropper,
-          image: this.props.data.image,
+          image: this.props.image.value,
           width: WIDTH
         });
       } else {
         imageComponent = e(StyledImagePlaceholder, { width: WIDTH });
       }
-      return e(StyledCard, null,
-        e(CardContent, null,
-          imageComponent,
-          e('div', null,
-            e(Button, {
-              onClick: e => this.fileInput.current.click()
-            }, 'select'),
-            e(Button, {
-              onClick: e => {
-                if (this.imageCropper.current) {
-                  this.imageCropper.current.resetMask();
-                }
+      return e('div', null,
+        imageComponent,
+        e('div', null,
+          e(Button, {
+            onClick: e => this.fileInput.current.click()
+          }, 'select'),
+          e(Button, {
+            onClick: e => {
+              if (this.imageCropper.current) {
+                this.imageCropper.current.resetMask();
               }
-            }, 'reset')
-          ),
-          e(StyledTextField, {
-            label: 'name',
-            fullWidth: true,
-            value: this.props.data.name,
-            onChange: e => this.handleChange({ name: e.target.value }),
-            InputProps: this.getNameInputProps(),
-          }),
-          e(StyledTextField, {
-            label: 'multiverse id',
-            fullWidth: true,
-            value: this.props.data.mid,
-            onChange: e => this.handleMidChange(e.target.value),
-            onBlur: e => this.handleMidBlur(e.target.value),
-          }),
-          e('input', {
-            ref: this.fileInput,
-            style: { display: 'none' },
-            type: 'file',
-            accept: 'image/*',
-            onChange: e => this.handleImageChange(e),
-          })
-        )
+            }
+          }, 'reset')
+        ),
+        e('input', {
+          ref: this.fileInput,
+          style: { display: 'none' },
+          type: 'file',
+          accept: 'image/*',
+          onChange: e => this.handleImageChange(e),
+        }),
       );
-    }
-
-    getNameInputProps() {
-      if (this.state.loadingName) {
-        return {
-          endAdornment: e(InputAdornment, { position: 'end' },
-            e(CircularProgress, { color: 'secondary', size: 20 })
-          )
-        };
-      } else {
-        return {};
-      }
-    }
-
-    handleChange(update) {
-      const newData = Object.assign(this.props.data, update);
-      this.props.onChange(
-        {
-          data: newData,
-          isValid: this.getIsValid(newData),
-          getImageData: () => this.imageCropper.current.renderImage(),
-          getDescription: () => getDescription(this.props.data.mid),
-        });
-    }
-
-    getIsValid(data) {
-      if (!data.image) {
-        return false;
-      }
-      if (!data.name) {
-        return false;
-      }
-      return true;
-    }
-
-    handleMidChange(mid) {
-      if (/^[0-9]*$/.test(mid)) {
-        this.handleChange({ mid: mid });
-      }
-    }
-
-    handleMidBlur(mid) {
-      if (!mid) {
-        return;
-      }
-      this.setState({ loadingName: true });
-      lookupCard(mid).then(data => {
-        this.handleChange({ name: data.name });
-        this.setState({ loadingName: false });
-      });
     }
 
     handleImageChange(e) {
       if (e.target.files.length === 0) {
-        this.handleChange({ image: null });
+        this.props.image.onChange(null);
         return;
       }
       const reader = new FileReader();
       reader.onload = e => {
         const image = new Image();
         image.addEventListener('load', () => {
-          this.handleChange({ image: image });
+          this.props.image.onChange(
+            image,
+            () => this.imageCropper.current ? this.imageCropper.current.renderImage() : null
+          );
         });
         image.src = e.target.result;
       };
@@ -291,33 +192,147 @@
     }
   }
 
+  class CardDataControls extends React.Component {
+    render() {
+      return e('div', null,
+        e(StyledTextField, {
+          label: 'multiverse id',
+          fullWidth: true,
+          value: this.props.mid.value || '',
+          onChange: e => this.handleMidChange(e.target.value),
+          onBlur: e => this.props.mid.onSubmit(e.target.value),
+        }),
+        e(StyledTextField, {
+          label: 'name',
+          fullWidth: true,
+          value: this.getCardName(),
+          InputProps: this.getNameInputProps(),
+        }),
+      );
+    }
+
+    handleMidChange(mid) {
+      if (/^[0-9]*$/.test(mid)) {
+        this.props.mid.onChange(mid);
+      }
+    }
+
+    getCardName() {
+      if (this.props.cardData && this.props.cardData.data) {
+        return this.props.cardData.data.name;
+      }
+      return '';
+    }
+
+    getNameInputProps() {
+      const props = { readOnly: true };
+      if (this.props.cardData && this.props.cardData.loading) {
+        props.endAdornment = e(InputAdornment, { position: 'end' },
+          e(CircularProgress, { color: 'secondary', size: 20 })
+        );
+      }
+      return props;
+    }
+  }
+
+  function ImageCard(props) {
+    return e(StyledCard, null,
+      e(CardContent, null,
+        e(ImageControls, { image: props.image }),
+        e(CardDataControls, { mid: props.mid, cardData: props.cardData }),
+      )
+    );
+  }
+
   class MainContent extends React.Component {
     constructor(props) {
       super(props);
-      this.state = { image: { isValid: false } };
+      this.state = {
+        title: null,
+        subtitle: null,
+        image: null,
+        getImageData: null,
+        mid: null,
+        cardData: null,
+      };
+    }
+
+    componentDidMount() {
+      if (chrome.runtime) {
+        chrome.runtime.onMessage.addListener(
+          request => {
+            switch (request.type) {
+              case 'LOAD_DATA':
+                this.setState(request.data);
+                break;
+            }
+          }
+        );
+      } else {
+        this.setState({ title: 'title', subtitle: 'subtitle' });
+      }
     }
 
     render() {
       return e('div', null,
         e(StyledMetadataCard, {
-          title: this.props.title,
-          subtitle: this.props.subtitle
+          title: this.state.title,
+          subtitle: this.state.subtitle
         }),
         e(ImageCard, {
-          data: this.state.image.data,
-          onChange: value => this.setState({ image: value })
+          image: {
+            value: this.state.image,
+            onChange: (image, getImageData) =>
+              this.setState({ image: image, getImageData: getImageData }),
+          },
+          mid: {
+            value: this.state.mid,
+            onChange: mid => this.handleMidChange(mid),
+            onSubmit: mid => this.handleMidSubmit(mid),
+          },
+          cardData: this.state.cardData,
         }),
         e(StyledDoneFab, {
           color: 'secondary',
-          disabled: !this.state.image.isValid,
-          onClick: e => this.props.onDone({
-            getImageData: this.state.image.getImageData,
-            getDescription: this.state.image.getDescription,
-          })
+          disabled: !this.state.image,
+          onClick: e => this.handleDone(),
         },
           e('i', { className: 'material-icons' }, 'done')
         )
       );
+    }
+
+    handleMidChange(mid) {
+      this.setState({ mid: mid });
+    }
+
+    handleMidSubmit(mid) {
+      const newState = { mid: mid };
+      if (!this.state.cardData || this.state.cardData.forMid != mid) {
+        if (mid) {
+          console.log('Fetching card data for ' + mid);
+          newState.cardData = { loading: true };
+          fetch(SCRYFALL_URL + 'cards/multiverse/' + mid)
+            .then(response => response.json())
+            .then(cardData => this.setState(
+              state => state.mid == mid ? {
+                cardData: { forMid: mid, data: cardData }
+              } : null
+            ));
+        } else {
+          newState.cardData = null;
+        }
+      }
+      this.setState(newState);
+    }
+
+    handleDone() {
+      this.props.onDone({
+        title: this.state.title,
+        subtitle: this.state.subtitle,
+        cardData: this.state.cardData ? this.state.cardData.data : null,
+        getImageData: this.state.getImageData,
+      });
     }
   }
 
@@ -345,26 +360,8 @@
       super(props);
       this.state = {
         working: false,
-        title: null,
-        subtitle: null,
         workingMessage: '',
       };
-    }
-
-    componentDidMount() {
-      if (chrome.runtime) {
-        chrome.runtime.onMessage.addListener(
-          request => {
-            switch (request.type) {
-              case 'LOAD_DATA':
-                this.setState(request.data);
-                break;
-            }
-          }
-        );
-      } else {
-        this.setState({ title: 'title', subtitle: 'subtitle' });
-      }
     }
 
     render() {
@@ -372,12 +369,7 @@
       if (this.state.working) {
         content = e(WorkingContent, { message: this.state.workingMessage });
       } else {
-        content = e(MainContent, {
-          data: this.state.data,
-          title: this.state.title,
-          subtitle: this.state.subtitle,
-          onDone: output => this.handleDone(output),
-        });
+        content = e(MainContent, { onDone: output => this.handleDone(output) });
       }
       return e(MuiThemeProvider, { theme: theme },
         e(CssBaseline),
@@ -386,13 +378,10 @@
       );
     }
 
-    handleDone(data) {
+    handleDone(output) {
       this.setState({ working: true, workingMessage: 'Processing...' });
       this.props.onDone({
-        title: this.state.title,
-        subtitle: this.state.subtitle,
-        getImageData: data.getImageData,
-        getDescription: data.getDescription,
+        ...output,
         onUpdate: update => this.setState({ workingMessage: update.message }),
       });
     }
