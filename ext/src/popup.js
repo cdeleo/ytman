@@ -51,20 +51,28 @@ function getValueMap(cardData) {
   return {};
 }
 
+function renderDescription(template, valueMap) {
+  let desc = template;
+  for (key in valueMap) {
+    desc = desc.replace('{' + key + '}', valueMap[key]);
+  }
+  return desc;
+}
+
 function getDescription(valueMap) {
-  return (
-    `Thumbnail from ${valueMap.name} by ${valueMap.artist}\n` +
-    `\u00A9 ${valueMap.year} ${valueMap.company}\n\n` +
-    `Intro by Carbot Animations`
-  );
+  return new Promise(resolve => {
+    chrome.storage.sync.get('desc', items => resolve(items.desc));
+  }).then(desc => renderDescription(desc, valueMap));
 }
 
 function handleDone(data) {
   if (port) {
-    port.postMessage({ description: getDescription(getValueMap(data.cardData)) });
     data.onUpdate({ message: 'Generating thumbnail...' });
     const setThumbnail = createThumbnail(data)
-      .then(thumbnail => port.postMessage({ thumbnail: thumbnail }))
+      .then(thumbnail => port.postMessage({ thumbnail: thumbnail }));
+    const setDescription = getDescription(getValueMap(data.cardData))
+      .then(desc => port.postMessage({ description: desc }));
+    Promise.all([setThumbnail, setDescription])
       .then(() => {
         data.onUpdate({ message: 'Done!' });
         window.close();

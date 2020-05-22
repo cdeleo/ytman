@@ -1,0 +1,30 @@
+<html>
+
+<head>
+    <style>
+        tt {
+            background-color: lightgray;
+        }
+
+        input {
+            margin: 10px 0 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>Description template:</h3>
+    <div>
+        <textarea id="desc-value" disabled cols=80 rows=10></textarea>
+    </div>
+    <div>
+        <tt>{name}</tt>, <tt>{artist}</tt>, <tt>{company}</tt> and <tt>{year}</tt> will be replaced with card data when
+        available.
+    </div>
+    <div>
+        <input type="button" id="desc-save" disabled value="Save">
+    </div>
+    <script src="src/options.js"></script>
+</body>
+
+</html>
