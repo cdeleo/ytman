@@ -16,7 +16,7 @@ parser.add_argument('--has_truth', type=bool, default=False, help='Whether the f
 parser.add_argument('--min_support', type=int, default=DEFAULT_MIN_SUPPORT, help='Minimum support for cut smoothing.')
 
 def evaluate(X, model, min_support=DEFAULT_MIN_SUPPORT):
-    y_hat = model['svc'].decision_function(X) > model['thresh']
+    y_hat = model['model'].predict(common.preprocess(X)) > model['thresh']
     return common.convolve_left(y_hat, np.ones(10).astype(np.uint8)) > min_support
 
 def main():

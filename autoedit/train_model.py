@@ -1,10 +1,12 @@
 import common
 
 import argparse
+import ng3
 import numpy as np
 import pickle
 import scipy.optimize
 
+from matplotlib import pyplot as plt
 from sklearn import svm
 
 N_THRESH = 100
@@ -17,20 +19,33 @@ args = parser.parse_args()
 
 def main():
     data = np.loadtxt(args.input, delimiter=',')
-    X = data[:, 1:-1]
+    X = common.preprocess(data[:, 1:-1])
     y = data[:, -1].astype(np.uint8)
 
-    svc = svm.SVC(class_weight='balanced')
-    svc.fit(X, y)
-    df = svc.decision_function(X)
+    model = ng3.Ng3Model()
+    model.fit(X, y, monotonicity=[ng3.Ng3Model.NON_INCREASING, ng3.Ng3Model.NON_INCREASING])
+    df = model.predict(X)
 
-    res = scipy.optimize.minimize_scalar(
-        lambda thresh: (common.pr(df > thresh, y)[1] - args.recall) ** 2,
-        bounds=(min(df), max(df)))
-    if not res.success:
-        raise Exception(res.message)
-    thresh = res.x
+    for i, model_part in enumerate(model._models):
+        plt.figure()
+        plt.plot(model_part._xs, model_part._ys)
+        plt.title('Feature %d' % i)
+        plt.savefig('feature_%d.png' % i)
 
+    xx, yy = np.meshgrid(
+        np.linspace(min(X[:, 0]), max(X[:, 0]), 1000),
+        np.linspace(min(X[:, 1]), max(X[:, 1]), 1000))
+    Z = model.predict(np.hstack([xx.ravel().reshape(-1, 1), yy.ravel().reshape(-1, 1)]))
+    Z = Z.reshape(xx.shape)
+    plt.figure()
+    plt.contourf(xx, yy, Z)
+    plt.title('Decision surface')
+    plt.savefig('decision.png')
+    plt.scatter(X[y==0, 0], X[y==0, 1], c='b', marker='+')
+    plt.scatter(X[y==1, 0], X[y==1, 1], c='r', marker='+')
+    plt.savefig('decision_with_points.png')
+
+    thresh = np.percentile(df[y == 1], 100 * (1 - args.recall))
     p, r = common.pr(df > thresh, y)
     print('Threshold = %f' % thresh)
     print('  p = %f' % p)
@@ -38,7 +53,7 @@ def main():
 
     with open(args.output, 'wb') as output_file:
         pickle.dump({
-            'svc': svc,
+            'model': model,
             'thresh': thresh,
         }, output_file)
 

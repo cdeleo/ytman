@@ -1,5 +1,4 @@
 import extract_features
-import process_features
 import evaluate_model
 import write_clips
 
@@ -14,10 +13,9 @@ parser.add_argument('output', type=str, help='Path for the output clip list.')
 args = parser.parse_args()
 
 def main():
-    raw_data = np.array(list(extract_features.extract(args.video)))
-    processed_data = process_features.process(raw_data)
-    t = processed_data[:, 0]
-    X = processed_data[:, 1:]
+    data = np.array(list(extract_features.extract(args.video)))
+    t = data[:, 0]
+    X = data[:, 1:]
 
     with open(args.model, 'rb') as model_file:
         model = pickle.load(model_file)
