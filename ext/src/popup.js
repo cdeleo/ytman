@@ -2,41 +2,30 @@ const e = React.createElement;
 
 let port = null;
 
-function createThumbnail(data) {
-  const background = new Image();
-  const backgroundReady = new Promise(resolve => {
-    background.onload = resolve;
+async function createThumbnail(data) {
+  const backgroundImg = new Image();
+  const background = new Promise(resolve => {
+    backgroundImg.onload = () => resolve(backgroundImg);
   });
-  background.src = data.getImageData();
-
-  const svgString = fetch('templates/orange.svg')
-    .then(response => response.text());
+  backgroundImg.src = data.getImageData();
 
   const canvas = document.querySelector('#thumbnail-render');
   const c = canvas.getContext('2d');
 
-  return Promise.all([background, svgString])
-    .then(values => {
-      const parser = new DOMParser();
-      const fontMap = { 'Aharoni': 'url(fonts/ahronbd-webfont.woff)' };
-      const renderer = new SvgRenderer(parser, values[1], fontMap);
+  const renderer = new SvgRenderer('templates/azorius.svg');
+  const valueMap = {
+    title: data.title,
+    subtitle: data.subtitle,
+  };
+  await renderer.render(c, background, valueMap);
 
-      const valueMap = {
-        title: data.title,
-        subtitle: data.subtitle,
-        background: background,
-      };
-      return renderer.render(c, valueMap);
-    })
-    .then(() => canvas.toDataURL())
-    .then(data => {
-      const prefix = 'data:image/png;base64,';
-      if (data.startsWith(prefix)) {
-        return data.substr(prefix.length);
-      } else {
-        return data;
-      }
-    });
+  const renderedData = canvas.toDataURL();
+  const prefix = 'data:image/png;base64,';
+  if (renderedData.startsWith(prefix)) {
+    return renderedData.substr(prefix.length);
+  } else {
+    return renderedData;
+  }
 }
 
 function getValueMap(cardData) {
